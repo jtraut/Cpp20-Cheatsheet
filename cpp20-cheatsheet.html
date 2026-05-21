@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Modern C++20 Cheat Sheet &amp; Interview Reference</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1217;
+    --panel: #161a22;
+    --panel-2: #1d222c;
+    --text: #e6e9ef;
+    --muted: #9aa3b2;
+    --accent: #6cb6ff;
+    --accent-2: #c792ea;
+    --warn: #f1c40f;
+    --bad: #ff6b6b;
+    --good: #6bcb77;
+    --border: #232a36;
+    --code-bg: #1b1f27;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55; font-size: 15px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  nav.sidebar {
+    background: var(--panel); border-right: 1px solid var(--border);
+    padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  nav.sidebar h2 { font-size: 14px; color: var(--accent-2); margin: 14px 0 6px;
+    letter-spacing: .04em; text-transform: uppercase; }
+  nav.sidebar h1 { font-size: 16px; color: var(--text); margin: 0 0 12px; }
+  nav.sidebar ul { list-style: none; padding-left: 0; margin: 0 0 8px; }
+  nav.sidebar li { margin: 2px 0; }
+  nav.sidebar a { color: var(--muted); display: block; padding: 3px 6px; border-radius: 4px; font-size: 13.5px; }
+  nav.sidebar a:hover { color: var(--text); background: var(--panel-2); text-decoration: none; }
+  main { padding: 28px 40px 80px; max-width: 1100px; }
+  h1, h2, h3, h4 { color: var(--text); }
+  h1.title { font-size: 30px; margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h2.section { font-size: 24px; margin-top: 42px; border-bottom: 1px solid var(--border); padding-bottom: 6px; color: var(--accent); }
+  h3 { font-size: 18px; margin-top: 28px; color: var(--accent-2); }
+  h4 { font-size: 15px; margin-top: 18px; color: var(--text); }
+  p { color: var(--text); }
+  .muted { color: var(--muted); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  code { background: var(--code-bg); color: #ffcb6b; padding: 1px 5px; border-radius: 3px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace; font-size: 13px; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 0; margin: 12px 0; position: relative; overflow: auto; }
+  pre code.hljs { padding: 14px 16px; font-size: 13px; line-height: 1.5;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace; background: transparent; }
+  .copy-btn { position: absolute; top: 6px; right: 8px; background: var(--panel-2);
+    color: var(--muted); border: 1px solid var(--border); padding: 3px 8px; font-size: 11px;
+    border-radius: 4px; cursor: pointer; opacity: 0; transition: opacity .15s; }
+  pre:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--text); }
+  .copy-btn.copied { color: var(--good); }
+  .callout { padding: 12px 14px; border-radius: 6px; margin: 14px 0;
+    border-left: 3px solid var(--accent); background: var(--panel); }
+  .callout.tip { border-color: var(--good); }
+  .callout.warn { border-color: var(--warn); }
+  .callout.bad { border-color: var(--bad); }
+  .callout strong { color: var(--text); }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13.5px; }
+  th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { background: var(--panel-2); color: var(--accent-2); font-weight: 600; }
+  tr:nth-child(even) td { background: var(--panel); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.sidebar { position: static; height: auto; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  kbd { background: var(--panel-2); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); font-size: 12px; }
+  .pill { display: inline-block; background: var(--panel-2); color: var(--accent-2);
+    padding: 1px 7px; border-radius: 10px; font-size: 11px; margin-left: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar">
+    <h1>C++20 Reference</h1>
+    <h2>Orientation</h2>
+    <ul>
+      <li><a href="#why-cpp">Why &amp; when C++</a></li>
+      <li><a href="#mental-model">Mental model</a></li>
+      <li><a href="#build">Compile &amp; build</a></li>
+    </ul>
+    <h2>Language basics</h2>
+    <ul>
+      <li><a href="#types">Types &amp; literals</a></li>
+      <li><a href="#variables">Variables, auto, const</a></li>
+      <li><a href="#refs-ptrs">References vs pointers</a></li>
+      <li><a href="#control-flow">Control flow</a></li>
+      <li><a href="#functions">Functions &amp; lambdas</a></li>
+      <li><a href="#error-handling">Errors &amp; exceptions</a></li>
+    </ul>
+    <h2>Data</h2>
+    <ul>
+      <li><a href="#strings">Strings &amp; formatting</a></li>
+      <li><a href="#arrays">Arrays &amp; std::array</a></li>
+      <li><a href="#containers">STL containers</a></li>
+      <li><a href="#utilities">pair / tuple / optional / variant</a></li>
+      <li><a href="#iterators-ranges">Iterators &amp; ranges</a></li>
+      <li><a href="#algorithms">STL algorithms</a></li>
+      <li><a href="#complexity">Complexity tables</a></li>
+    </ul>
+    <h2>OOP &amp; memory</h2>
+    <ul>
+      <li><a href="#classes">Classes &amp; structs</a></li>
+      <li><a href="#special-members">Rule of 0/3/5, move</a></li>
+      <li><a href="#inheritance">Inheritance &amp; virtual</a></li>
+      <li><a href="#smart-pointers">Smart pointers &amp; RAII</a></li>
+    </ul>
+    <h2>Generic programming</h2>
+    <ul>
+      <li><a href="#templates">Templates</a></li>
+      <li><a href="#concepts">Concepts</a></li>
+      <li><a href="#crtp">Idioms (CRTP, PIMPL, ...)</a></li>
+    </ul>
+    <h2>C++20 highlights</h2>
+    <ul>
+      <li><a href="#cpp20-ranges">Ranges</a></li>
+      <li><a href="#cpp20-coroutines">Coroutines</a></li>
+      <li><a href="#cpp20-modules">Modules</a></li>
+      <li><a href="#cpp20-misc">format, span, &lt;=&gt;, more</a></li>
+    </ul>
+    <h2>Concurrency</h2>
+    <ul>
+      <li><a href="#threads">Threads &amp; jthread</a></li>
+      <li><a href="#sync">Mutexes &amp; atomics</a></li>
+      <li><a href="#async">async, future, promise</a></li>
+    </ul>
+    <h2>Reference</h2>
+    <ul>
+      <li><a href="#idioms">Idioms cheatsheet</a></li>
+      <li><a href="#pitfalls">Pitfalls &amp; UB</a></li>
+      <li><a href="#interview">Interview Q&amp;A</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+  <h1 class="title">Modern C++20 &mdash; Cheat Sheet &amp; Interview Reference</h1>
+  <p class="muted">A single-file reference covering language fundamentals, the STL, modern idioms, and C++20 additions. Designed for someone with prior C++ experience refreshing before a technical interview. Hover over any code block to copy.</p>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="why-cpp">Why &amp; when C++</h2>
+
+  <p>C++ is a multi-paradigm, statically typed, compiled systems language with <strong>zero-overhead abstraction</strong> as its guiding principle: you should not pay (in runtime cost or memory) for features you don't use, and what you do use should be as efficient as hand-written C. It gives you direct control of memory layout, lifetime, and CPU instructions while still offering high-level abstractions (templates, RAII, the STL).</p>
+
+  <h3>What it does best</h3>
+  <ul>
+    <li><strong>Latency-critical work.</strong> Game engines (Unreal), trading systems, audio/DSP, robotics, real-time control. You can reason about cache behavior, allocation, and branch cost.</li>
+    <li><strong>Systems software.</strong> Databases (ClickHouse, MySQL, MongoDB), browsers (Chromium, WebKit), compilers (LLVM, GCC), operating system components.</li>
+    <li><strong>Numerical / HPC.</strong> Scientific computing, ML kernels (PyTorch C++ core, TensorFlow), CAD/simulation, financial pricing libraries.</li>
+    <li><strong>Embedded with abstraction.</strong> Where C is too low-level but you still want deterministic behavior and no garbage collector.</li>
+    <li><strong>Cross-language plumbing.</strong> Native libraries that everything else binds to (Python C extensions, Node addons).</li>
+  </ul>
+
+  <h3>Where it falls short</h3>
+  <ul>
+    <li><strong>Iteration speed.</strong> Long build times, slow feedback loops vs Python/Go/TypeScript. Templates and headers compound this.</li>
+    <li><strong>Easy footguns.</strong> Undefined behavior, dangling references, data races, lifetime bugs. The language trusts you completely.</li>
+    <li><strong>Dependency management.</strong> No standard package manager; CMake/Conan/vcpkg are an ecosystem to learn separately.</li>
+    <li><strong>Surface area.</strong> The language is huge. Every feature interacts with every other; corner cases abound.</li>
+    <li><strong>Web/scripting/glue.</strong> Almost never the right choice. Reach for Python, TypeScript, Go.</li>
+  </ul>
+
+  <div class="callout tip">
+    <strong>Rule of thumb for choosing C++:</strong> if you would lose money or break determinism by using a garbage-collected language, C++ is a contender. Otherwise, a higher-level language is usually a better default.
+  </div>
+
+  <h2 class="section" id="mental-model">Mental model</h2>
+  <p>Three ideas account for most of "thinking in modern C++":</p>
+  <ol>
+    <li><strong>Values, not references, by default.</strong> Variables <em>are</em> objects, not handles to objects. Assignment copies. Passing copies. Move semantics let you transfer ownership cheaply when you want it.</li>
+    <li><strong>RAII: lifetime is the unit of resource management.</strong> Constructors acquire, destructors release. Stack unwinding cleans up on exceptions. Smart pointers, locks, file handles, sockets all follow this.</li>
+    <li><strong>Templates are compile-time code generation.</strong> The compiler stamps out a new function/class for each set of template arguments. Concepts (C++20) put constraints on those arguments.</li>
+  </ol>
+
+  <h2 class="section" id="build">Compile &amp; build</h2>
+  <pre><code class="language-cpp">// Single file, manual compile
+g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic main.cpp -o app
+clang++ -std=c++20 -O2 -Wall -Wextra -Wpedantic main.cpp -o app
+
+// With debug info (use with gdb / lldb)
+g++ -std=c++20 -O0 -g main.cpp -o app
+
+// AddressSanitizer + UBSan (catch memory + UB bugs at runtime)
+g++ -std=c++20 -O1 -g -fsanitize=address,undefined main.cpp -o app
+
+// Common warnings worth enabling
+-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wnon-virtual-dtor</code></pre>
+
+  <h4>Minimal CMake</h4>
+  <pre><code class="language-cpp">cmake_minimum_required(VERSION 3.20)
+project(myapp CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+add_executable(myapp src/main.cpp src/foo.cpp)
+target_compile_options(myapp PRIVATE -Wall -Wextra -Wpedantic)</code></pre>
+
+  <p class="muted">Build with <code>cmake -S . -B build &amp;&amp; cmake --build build -j</code>.</p>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="types">Types &amp; literals</h2>
+
+  <pre><code class="language-cpp">#include &lt;cstdint&gt;
+
+// Fundamental
+bool        b   = true;
+char        c   = 'A';
+int         i   = 42;
+long        l   = 42L;
+long long   ll  = 42LL;
+unsigned    u   = 42U;
+float       f   = 3.14f;
+double      d   = 3.14;
+long double ld  = 3.14L;
+auto        x   = 42;       // int
+auto        y   = 42u;      // unsigned
+auto        z   = 42.0;     // double
+
+// Fixed-width (prefer these for serialization, hashing, etc.)
+std::int8_t   i8;
+std::int32_t  i32;
+std::int64_t  i64;
+std::uint32_t u32;
+std::size_t   n;            // unsigned, container sizes &amp; indices
+std::ptrdiff_t diff;        // signed, pointer differences
+
+// Character / string literals
+auto s1 = "hello";          // const char*
+auto s2 = u8"hello";        // const char8_t* (C++20)
+auto s3 = L"hello";         // const wchar_t*
+using namespace std::literals;
+auto s4 = "hello"s;         // std::string
+auto s5 = "hello"sv;        // std::string_view
+auto t  = 5s;               // std::chrono::seconds
+
+// Binary / digit-separator literals
+int mask  = 0b1010'1100;
+int big   = 1'000'000;
+auto hex  = 0xCAFEBABE;</code></pre>
+
+  <div class="callout warn">
+    <strong>Signed vs unsigned:</strong> mixing them in comparisons or arithmetic is a classic bug source. <code>std::vector::size()</code> is unsigned (<code>size_t</code>) &mdash; subtracting can underflow to a huge value. Prefer signed for arithmetic; use <code>static_cast</code> when crossing.
+  </div>
+
+  <h2 class="section" id="variables">Variables, auto, const, constexpr</h2>
+
+  <pre><code class="language-cpp">// Initialization forms
+int a = 5;            // copy init
+int b(5);             // direct init
+int c{5};             // brace (uniform) init &mdash; preferred; rejects narrowing
+int d = {5};          // copy-list init
+// int e{3.14};       // ERROR: narrowing
+int f{};              // value init &rarr; 0
+
+// auto deduces from initializer
+auto v = std::vector&lt;int&gt;{1, 2, 3};
+const auto&amp; cref = v;  // const reference to v
+
+// Structured bindings (C++17, often used in C++20)
+std::pair&lt;int, std::string&gt; p{1, "x"};
+auto [id, name] = p;
+
+std::map&lt;std::string, int&gt; m{{"a", 1}, {"b", 2}};
+for (const auto&amp; [k, val] : m) { /* ... */ }
+
+// const &mdash; "I won't change this object"
+const int  N = 100;
+const int* p1;   // pointer to const int (data is const)
+int* const p2 = &amp;a; // const pointer to int (pointer is const)
+const int* const p3 = &amp;a;
+
+// constexpr &mdash; "evaluable at compile time"
+constexpr int square(int x) { return x * x; }
+constexpr int s = square(5);   // computed at compile time
+
+// consteval (C++20) &mdash; MUST run at compile time
+consteval int cube(int x) { return x * x * x; }
+constexpr int k = cube(3);     // ok
+// int n = cube(rand());       // ERROR
+
+// constinit (C++20) &mdash; runtime init forbidden, but value is mutable
+constinit int counter = 0;     // static storage, no init-order fiasco</code></pre>
+
+  <h4>auto, decltype, decltype(auto)</h4>
+  <pre><code class="language-cpp">int  n = 5;
+int&amp; r = n;
+auto a1 = r;          // int  (auto drops reference / top-level const)
+auto&amp; a2 = r;         // int&amp;
+decltype(r)  d1 = n;  // int&amp;  (preserves reference)
+decltype(n)  d2 = n;  // int
+
+// decltype(auto) preserves reference-ness from the return expression
+decltype(auto) get(std::vector&lt;int&gt;&amp; v) { return v[0]; }  // returns int&amp;</code></pre>
+
+  <h2 class="section" id="refs-ptrs">References vs pointers</h2>
+
+  <table>
+    <tr><th>Reference (<code>T&amp;</code>)</th><th>Pointer (<code>T*</code>)</th></tr>
+    <tr>
+      <td>Must be bound at creation; cannot rebind</td>
+      <td>Can be reassigned, can be null, can do pointer arithmetic</td>
+    </tr>
+    <tr>
+      <td>Cannot be null (by language)</td>
+      <td>Can be <code>nullptr</code></td>
+    </tr>
+    <tr>
+      <td>Syntactically transparent (acts like the object)</td>
+      <td>Requires <code>*</code> / <code>-&gt;</code> to dereference</td>
+    </tr>
+    <tr>
+      <td>Preferred for function parameters and return values when "always present"</td>
+      <td>Preferred when "optional" or "owning" (raw pointers for non-owning views, smart pointers for ownership)</td>
+    </tr>
+  </table>
+
+  <pre><code class="language-cpp">void swap(int&amp; a, int&amp; b) { int t = a; a = b; b = t; }
+
+// Modern guidance:
+// &bull; Pass by value if cheap to copy (int, std::string_view, std::span).
+// &bull; Pass by const ref for non-trivial inputs you won't modify.
+// &bull; Pass by non-const ref for "in-out" parameters.
+// &bull; Pass by rvalue ref (T&amp;&amp;) when you specifically want to take ownership.
+// &bull; Pass raw T* only for optional / nullable non-owning.
+// &bull; Pass std::unique_ptr&lt;T&gt; / shared_ptr to transfer ownership.</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="control-flow">Control flow</h2>
+
+  <h4>if / else &mdash; including init-statement and <code>if constexpr</code></h4>
+  <pre><code class="language-cpp">if (int n = compute(); n &gt; 0) {       // init-statement (C++17)
+    use(n);
+} else if (n == 0) {
+    // ...
+} else {
+    // ...
+}
+
+// Compile-time branch &mdash; non-taken branch isn't instantiated
+template &lt;typename T&gt;
+auto to_string(const T&amp; x) {
+    if constexpr (std::is_integral_v&lt;T&gt;)
+        return std::to_string(x);
+    else if constexpr (std::is_same_v&lt;T, std::string&gt;)
+        return x;
+    else
+        return std::string{"?"};
+}</code></pre>
+
+  <h4>switch</h4>
+  <pre><code class="language-cpp">switch (status) {
+    case 200:
+    case 204:
+        ok();
+        break;
+    case 404:
+        not_found();
+        [[fallthrough]];          // intentional fall-through marker
+    case 500:
+        log_error();
+        break;
+    default:
+        unknown();
+}</code></pre>
+
+  <h4>Loops</h4>
+  <pre><code class="language-cpp">for (int i = 0; i &lt; 10; ++i) { /* classic */ }
+
+while (cond) { /* ... */ }
+do { /* ... */ } while (cond);
+
+// Range-based for &mdash; works on anything with begin()/end()
+std::vector&lt;int&gt; v{1,2,3};
+for (int x : v)        { /* copy */ }
+for (const auto&amp; x : v){ /* read-only ref &mdash; usually correct */ }
+for (auto&amp; x : v)      { x *= 2; }
+
+// Range-for with init-statement (C++20)
+for (auto v = make_data(); auto&amp; x : v) { /* v lives for the loop */ }
+
+// Iterate with index
+for (std::size_t i = 0; i &lt; v.size(); ++i) { /* ... */ }
+
+// Reverse with views (C++20)
+import std;  // or: #include &lt;ranges&gt;
+for (int x : v | std::views::reverse) { /* ... */ }</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="functions">Functions &amp; lambdas</h2>
+
+  <pre><code class="language-cpp">// Trailing return type &mdash; useful with templates
+auto add(int a, int b) -&gt; int { return a + b; }
+
+// Default arguments
+void greet(std::string_view name = "world");
+
+// Overloading
+int  area(int side);
+double area(double r);
+
+// Pass-by-value-then-move idiom (one function handles lvalues &amp; rvalues)
+class Person {
+    std::string name_;
+public:
+    explicit Person(std::string name) : name_(std::move(name)) {}
+};
+
+// [[nodiscard]], [[deprecated]], [[noreturn]]
+[[nodiscard]] int parse(std::string_view s);
+[[noreturn]] void die(const char* msg);
+
+// Lambdas
+auto sq = [](int x) { return x * x; };
+
+// Captures
+int z = 5;
+auto by_val   = [z](int x)        { return x + z; };
+auto by_ref   = [&amp;z](int x)       { return x + z; };
+auto by_move  = [s = std::string{"hi"}](int){ return s.size(); };
+auto by_all_v = [=]() mutable { /* copies of all used names */ };
+auto by_all_r = [&amp;]() { /* refs to all used names &mdash; danger of dangling */ };
+
+// Generic lambda (C++14) / template lambda (C++20)
+auto gen   = [](auto x, auto y) { return x + y; };
+auto tmpl  = []&lt;typename T&gt;(std::vector&lt;T&gt;&amp; v) { return v.size(); };
+
+// std::function &mdash; type-erased callable (heap alloc, virtual call)
+std::function&lt;int(int)&gt; f = sq;</code></pre>
+
+  <div class="callout tip">
+    <strong>Lambda over <code>std::function</code>:</strong> pass lambdas as templates (or via <code>auto</code> parameters) to keep them inlined and allocation-free. Reach for <code>std::function</code> only when you need type erasure (e.g., storing heterogeneous callbacks).
+  </div>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="error-handling">Errors &amp; exceptions</h2>
+
+  <pre><code class="language-cpp">#include &lt;stdexcept&gt;
+
+int parse(std::string_view s) {
+    if (s.empty()) throw std::invalid_argument("empty");
+    // ...
+    return 0;
+}
+
+try {
+    parse("");
+} catch (const std::invalid_argument&amp; e) {
+    std::cerr &lt;&lt; "bad input: " &lt;&lt; e.what() &lt;&lt; '\n';
+} catch (const std::exception&amp; e) {
+    std::cerr &lt;&lt; e.what() &lt;&lt; '\n';
+} catch (...) {
+    std::cerr &lt;&lt; "unknown error\n";
+}
+
+// noexcept &mdash; promise not to throw; enables optimizations and move-vs-copy choices
+void close() noexcept;
+auto sum(const std::vector&lt;int&gt;&amp; v) noexcept -&gt; int;
+
+// Alternatives to exceptions (common in performance-sensitive code):
+std::optional&lt;int&gt; try_parse(std::string_view);
+std::expected&lt;int, ParseError&gt; parse2(std::string_view);  // C++23
+
+// Error codes (C++17 onward)
+#include &lt;system_error&gt;
+std::error_code ec;
+auto f = std::filesystem::file_size("x", ec);</code></pre>
+
+  <div class="callout warn">
+    <strong>Destructors must not throw.</strong> If a destructor throws during stack unwinding caused by another exception, <code>std::terminate</code> is called. Mark them <code>noexcept</code> (the default) and swallow / log errors instead.
+  </div>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="strings">Strings &amp; formatting</h2>
+
+  <pre><code class="language-cpp">#include &lt;string&gt;
+#include &lt;string_view&gt;
+#include &lt;format&gt;   // C++20
+using namespace std::literals;
+
+std::string s = "hello";
+s += " world";
+s.append(3, '!');                // "hello world!!!"
+s.size(); s.length(); s.empty();
+s[0]; s.at(0);                   // at() throws std::out_of_range
+s.front(); s.back();
+
+// Search / substring
+auto pos = s.find("world");      // npos if not found
+if (pos != std::string::npos) {}
+s.substr(6, 5);                  // "world"
+s.starts_with("hello");          // C++20
+s.ends_with("!!!");              // C++20
+s.contains("wor");               // C++23
+
+// Replace / insert / erase
+s.replace(0, 5, "HELLO");
+s.insert(5, "_X");
+s.erase(0, 6);
+
+// Convert
+int  n = std::stoi("42");
+double d = std::stod("3.14");
+auto str = std::to_string(42);
+
+// string_view &mdash; non-owning view, cheap to pass
+void log(std::string_view sv);   // accepts std::string, const char*, literal
+// WARNING: don't dangle &mdash; sv must outlive the underlying buffer
+
+// C++20 std::format &mdash; type-safe Python-like formatting
+auto msg = std::format("{} = {:.2f} ({:#x})", "pi", 3.14159, 255);
+std::cout &lt;&lt; std::format("hex: {:08x}\n", 0xABC);
+
+// Concatenation
+std::string a = "foo", b = "bar";
+auto c = a + b;                   // ok
+auto d = std::format("{}{}", a, b);
+
+// Iterate
+for (char ch : s) { /* ... */ }</code></pre>
+
+  <h4>I/O quick reference</h4>
+  <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;sstream&gt;
+
+std::cout &lt;&lt; "n = " &lt;&lt; n &lt;&lt; '\n';
+std::cerr &lt;&lt; "error\n";
+
+int x; std::cin &gt;&gt; x;
+std::string line; std::getline(std::cin, line);
+
+std::ifstream in("input.txt");
+std::ofstream out("out.txt");
+for (std::string l; std::getline(in, l); ) { /* ... */ }
+
+// Build a string
+std::ostringstream oss;
+oss &lt;&lt; "n=" &lt;&lt; 42;
+std::string built = oss.str();
+
+// Fast unsynced cout (don't mix with printf afterward)
+std::ios_base::sync_with_stdio(false);
+std::cin.tie(nullptr);</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="arrays">Arrays &amp; std::array</h2>
+
+  <pre><code class="language-cpp">// C-style array (avoid in new code, but you'll see them)
+int a[5] = {1, 2, 3};   // remaining = 0
+int b[]  = {1, 2, 3};   // size 3
+int c[5]{};             // all zero
+
+// std::array &mdash; fixed-size, value semantics, knows its size
+#include &lt;array&gt;
+std::array&lt;int, 5&gt; arr = {1, 2, 3, 4, 5};
+arr.size();             // 5  (constexpr)
+arr[0];                 // unchecked
+arr.at(0);              // bounds-checked, throws
+arr.front(); arr.back();
+arr.fill(0);
+for (auto&amp; x : arr) { x *= 2; }
+
+// std::span &mdash; non-owning view over a contiguous range (C++20)
+#include &lt;span&gt;
+void sum(std::span&lt;const int&gt; xs);
+int  raw[10]; sum(raw);
+std::vector&lt;int&gt; v(10); sum(v);
+sum(arr);</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="containers">STL containers</h2>
+
+  <table>
+    <tr><th>Container</th><th>When to use</th><th>Notes</th></tr>
+    <tr><td><code>std::vector&lt;T&gt;</code></td><td>Default sequence container</td><td>Contiguous, cache-friendly, amortized O(1) push_back</td></tr>
+    <tr><td><code>std::array&lt;T,N&gt;</code></td><td>Fixed-size, stack-allocated</td><td>Compile-time size, like C array but safer</td></tr>
+    <tr><td><code>std::deque&lt;T&gt;</code></td><td>Push/pop at both ends</td><td>Segmented storage; slower iteration than vector</td></tr>
+    <tr><td><code>std::list&lt;T&gt;</code></td><td>Many splices, stable iterators</td><td>Doubly linked. Almost never the answer.</td></tr>
+    <tr><td><code>std::forward_list&lt;T&gt;</code></td><td>Memory-constrained linked list</td><td>Singly linked</td></tr>
+    <tr><td><code>std::map / set</code></td><td>Ordered, log N ops, iteration in order</td><td>Red-black tree</td></tr>
+    <tr><td><code>std::unordered_map / set</code></td><td>Hash-based, average O(1)</td><td>Open hashing; needs hash &amp; equality</td></tr>
+    <tr><td><code>std::multimap / multiset</code></td><td>Duplicate keys allowed</td><td>Ordered variants</td></tr>
+    <tr><td><code>std::stack / queue / priority_queue</code></td><td>Adaptors</td><td>Built on top of deque/vector</td></tr>
+    <tr><td><code>std::flat_map / flat_set</code></td><td>Small ordered sets, cache-friendly</td><td>C++23</td></tr>
+  </table>
+
+  <h4>std::vector &mdash; the workhorse</h4>
+  <pre><code class="language-cpp">#include &lt;vector&gt;
+std::vector&lt;int&gt; v;             // empty
+std::vector&lt;int&gt; v2(10);        // 10 zeros
+std::vector&lt;int&gt; v3(10, 7);     // 10 sevens
+std::vector&lt;int&gt; v4{1, 2, 3};   // brace-init list
+
+v.reserve(1000);                // pre-allocate capacity (no size change)
+v.resize(50);                   // change size (default-construct extras)
+
+v.push_back(42);
+v.emplace_back(42);             // constructs in place &mdash; preferred for non-trivial T
+
+v.pop_back();
+v.front(); v.back();
+v[i]; v.at(i);                  // at() throws std::out_of_range
+
+v.size(); v.capacity(); v.empty();
+v.clear();                      // size=0, capacity unchanged
+v.shrink_to_fit();              // hint to release capacity
+
+// Insert / erase
+v.insert(v.begin() + 2, 99);
+v.erase(v.begin());             // O(n)
+v.erase(std::remove(v.begin(), v.end(), 7), v.end());  // erase-remove
+
+// Or C++20 free functions:
+std::erase(v, 7);
+std::erase_if(v, [](int x){ return x % 2 == 0; });
+
+// Move semantics matter here &mdash; reserve to avoid reallocs invalidating refs
+auto&amp; first = v.front();
+v.push_back(1);                 // may invalidate `first`!</code></pre>
+
+  <h4>std::map / unordered_map</h4>
+  <pre><code class="language-cpp">#include &lt;map&gt;
+#include &lt;unordered_map&gt;
+
+std::map&lt;std::string, int&gt; counts;
+counts["a"] = 1;                // creates if absent
+counts.insert({"b", 2});
+counts.emplace("c", 3);
+counts.try_emplace("d", 4);     // doesn't construct value if key exists
+
+// Lookup
+if (auto it = counts.find("a"); it != counts.end()) {
+    use(it-&gt;first, it-&gt;second);
+}
+counts.contains("a");           // C++20
+auto v = counts.at("a");        // throws if missing
+auto n = counts["x"];           // CREATES with default value (0). beware.
+
+// Iterate
+for (const auto&amp; [k, v] : counts) { /* ... */ }
+
+// Erase
+counts.erase("a");
+std::erase_if(counts, [](const auto&amp; kv){ return kv.second &lt; 0; });
+
+// unordered &mdash; same API, hash-based, no ordering
+std::unordered_map&lt;std::string, int&gt; h;
+h.reserve(1000);                // bucket count hint
+
+// Custom hash for user types
+struct Point { int x, y; bool operator==(const Point&amp;) const = default; };
+struct PointHash {
+    std::size_t operator()(const Point&amp; p) const noexcept {
+        return std::hash&lt;int&gt;{}(p.x) ^ (std::hash&lt;int&gt;{}(p.y) &lt;&lt; 1);
+    }
+};
+std::unordered_map&lt;Point, int, PointHash&gt; pm;</code></pre>
+
+  <h4>set / unordered_set</h4>
+  <pre><code class="language-cpp">#include &lt;set&gt;
+#include &lt;unordered_set&gt;
+std::set&lt;int&gt; s{3, 1, 4, 1, 5};     // ordered, deduplicated: {1,3,4,5}
+s.insert(9);
+s.erase(3);
+s.count(4); s.contains(4);
+for (int x : s) { /* sorted iteration */ }
+
+std::unordered_set&lt;std::string&gt; us;</code></pre>
+
+  <h4>Adaptors: stack / queue / priority_queue</h4>
+  <pre><code class="language-cpp">#include &lt;stack&gt;
+#include &lt;queue&gt;
+std::stack&lt;int&gt; st;
+st.push(1); st.top(); st.pop();
+
+std::queue&lt;int&gt; q;
+q.push(1); q.front(); q.back(); q.pop();
+
+// Max-heap by default
+std::priority_queue&lt;int&gt; pq;
+pq.push(3); pq.push(1); pq.push(4);
+pq.top();   // 4
+pq.pop();
+
+// Min-heap
+std::priority_queue&lt;int, std::vector&lt;int&gt;, std::greater&lt;&gt;&gt; minpq;</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="utilities">pair / tuple / optional / variant</h2>
+
+  <pre><code class="language-cpp">#include &lt;utility&gt;
+#include &lt;tuple&gt;
+std::pair&lt;int, std::string&gt; p{1, "x"};
+p.first; p.second;
+auto [a, b] = p;
+
+std::tuple&lt;int, double, std::string&gt; t{1, 3.14, "hi"};
+std::get&lt;0&gt;(t); std::get&lt;std::string&gt;(t);
+auto [i, d, s] = t;
+auto t2 = std::make_tuple(1, 2.0, "z");
+
+// optional &mdash; "value or nothing"
+#include &lt;optional&gt;
+std::optional&lt;int&gt; parse(std::string_view);
+if (auto v = parse("42")) {
+    use(*v);
+}
+auto v2 = parse("?").value_or(-1);
+
+// variant &mdash; tagged union, "one of these types"
+#include &lt;variant&gt;
+std::variant&lt;int, std::string, double&gt; var = 42;
+var = "hello";
+std::holds_alternative&lt;std::string&gt;(var);
+if (auto* p = std::get_if&lt;std::string&gt;(&amp;var)) { use(*p); }
+
+// std::visit + overload set
+std::visit([](auto&amp;&amp; x){ std::cout &lt;&lt; x; }, var);
+
+// any &mdash; type-erased single value (rarely the right choice)
+#include &lt;any&gt;
+std::any a = 42;
+int n = std::any_cast&lt;int&gt;(a);</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="iterators-ranges">Iterators &amp; ranges</h2>
+
+  <p>An <strong>iterator</strong> is a generalized pointer: <code>*it</code> reads, <code>++it</code> advances, <code>it == end</code> tests termination. Algorithms work on <em>iterator pairs</em>. C++20 ranges replace most of that with cleaner <em>range</em>-based APIs and lazy <em>views</em>.</p>
+
+  <pre><code class="language-cpp">// Iterator categories: input, output, forward, bidirectional, random-access, contiguous
+
+std::vector&lt;int&gt; v{1, 2, 3, 4, 5};
+auto it = v.begin();
+auto e  = v.end();
+auto rit = v.rbegin();          // reverse iterator
+auto cit = v.cbegin();          // const iterator
+
+// Distance / advance
+auto n = std::distance(it, e);
+std::advance(it, 2);
+auto next_it = std::next(it);
+auto prev_it = std::prev(e);
+
+// Ranges &mdash; the modern way
+#include &lt;ranges&gt;
+namespace rg = std::ranges;
+namespace v  = std::views;
+
+rg::sort(v);
+auto pos = rg::find(v, 3);
+auto cnt = rg::count_if(v, [](int x){ return x &gt; 2; });
+
+// Views are lazy &mdash; nothing happens until iteration
+auto even_squares = v
+    | v::filter([](int x){ return x % 2 == 0; })
+    | v::transform([](int x){ return x * x; });
+
+for (int x : even_squares) std::cout &lt;&lt; x &lt;&lt; ' ';
+
+// Common views
+v::iota(0, 10)              // 0..9
+v::reverse                  // reversed
+v::take(5)                  // first 5
+v::drop(3)                  // skip first 3
+v::join                     // flatten ranges of ranges
+v::split(' ')               // split on delimiter
+v::elements&lt;0&gt;              // for ranges of tuples/pairs &mdash; .first
+v::keys, v::values          // for map-like ranges
+v::zip                      // C++23</code></pre>
+
+  <div class="callout tip">
+    <strong>Ranges advantage:</strong> no more <code>auto it = ...; auto end = ...;</code> ceremony. <code>std::ranges::sort(v)</code> sorts the whole container, and pipelines compose with <code>|</code>.
+  </div>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="algorithms">STL algorithms</h2>
+
+  <p>Always prefer an algorithm over a hand-written loop &mdash; clearer intent and often faster.</p>
+
+  <pre><code class="language-cpp">#include &lt;algorithm&gt;
+#include &lt;numeric&gt;
+#include &lt;ranges&gt;
+namespace rg = std::ranges;
+
+std::vector&lt;int&gt; v{3, 1, 4, 1, 5, 9, 2, 6};
+
+// --- Sorting / ordering ---
+rg::sort(v);                                // ascending
+rg::sort(v, std::greater&lt;&gt;{});              // descending
+rg::stable_sort(v);                         // preserves equal-key order
+rg::partial_sort(v, v.begin() + 3);         // top-3 sorted at front
+rg::nth_element(v, v.begin() + 4);          // median at v[4]
+rg::reverse(v);
+rg::rotate(v, v.begin() + 2);
+rg::shuffle(v, std::mt19937{std::random_device{}()});
+
+// --- Search ---
+bool has5 = rg::binary_search(v, 5);        // requires sorted
+auto it   = rg::find(v, 4);
+auto it2  = rg::find_if(v, [](int x){ return x &gt; 5; });
+auto lb   = rg::lower_bound(v, 3);          // first &gt;= 3
+auto ub   = rg::upper_bound(v, 3);          // first &gt;  3
+auto [a, b] = rg::equal_range(v, 3);
+
+// --- Aggregations ---
+auto sum  = std::accumulate(v.begin(), v.end(), 0);
+auto sum2 = std::reduce(v.begin(), v.end());                 // parallel-friendly
+auto prod = std::accumulate(v.begin(), v.end(), 1, std::multiplies&lt;&gt;{});
+auto cnt  = rg::count(v, 1);
+auto cnt2 = rg::count_if(v, [](int x){ return x &gt; 2; });
+auto mn   = rg::min_element(v);
+auto mx   = rg::max_element(v);
+auto [mnIt, mxIt] = rg::minmax_element(v);
+
+// --- Modification ---
+rg::fill(v, 0);
+std::iota(v.begin(), v.end(), 1);            // 1, 2, 3, ...
+rg::transform(v, v.begin(), [](int x){ return x * 2; });
+rg::replace(v, 0, -1);
+rg::unique(v);                               // assumes sorted; returns new logical end
+rg::generate(v, []{ return rand(); });
+
+// --- Predicates / set operations ---
+bool any = rg::any_of(v, [](int x){ return x &lt; 0; });
+bool all = rg::all_of(v, [](int x){ return x &gt; 0; });
+bool nono = rg::none_of(v, [](int x){ return x == 0; });
+
+std::vector&lt;int&gt; a{1,2,3,4}, b{3,4,5,6}, out;
+std::set_intersection(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(out));
+std::set_union(...);
+std::set_difference(...);
+
+// --- Parallel execution (C++17) ---
+#include &lt;execution&gt;
+std::sort(std::execution::par, v.begin(), v.end());
+auto s = std::reduce(std::execution::par_unseq, v.begin(), v.end());</code></pre>
+
+  <h2 class="section" id="complexity">Complexity reference</h2>
+
+  <table>
+    <tr><th>Container</th><th>Random access</th><th>Insert front</th><th>Insert middle</th><th>Insert back</th><th>Find</th></tr>
+    <tr><td>vector</td><td>O(1)</td><td>O(n)</td><td>O(n)</td><td>O(1)*</td><td>O(n)</td></tr>
+    <tr><td>deque</td><td>O(1)</td><td>O(1)*</td><td>O(n)</td><td>O(1)*</td><td>O(n)</td></tr>
+    <tr><td>list</td><td>&mdash;</td><td>O(1)</td><td>O(1) with iter</td><td>O(1)</td><td>O(n)</td></tr>
+    <tr><td>map / set</td><td>&mdash;</td><td>O(log n)</td><td>O(log n)</td><td>O(log n)</td><td>O(log n)</td></tr>
+    <tr><td>unordered_map / set</td><td>&mdash;</td><td>O(1) avg</td><td>O(1) avg</td><td>O(1) avg</td><td>O(1) avg, O(n) worst</td></tr>
+  </table>
+  <p class="muted">* amortized. Iterator invalidation rules differ &mdash; <code>vector</code> reallocation invalidates everything; <code>list</code>/<code>map</code> only invalidate the erased element.</p>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="classes">Classes &amp; structs</h2>
+
+  <pre><code class="language-cpp">// struct vs class: identical except default access (struct: public, class: private).
+// Convention: use struct for pure data / aggregates; class for invariants.
+
+class Account {
+public:
+    // Constructors
+    Account() = default;
+    explicit Account(std::string owner, double balance = 0.0)
+        : owner_(std::move(owner)), balance_(balance) {}
+
+    // Member functions
+    void deposit(double amt) { balance_ += amt; }
+    [[nodiscard]] double balance() const { return balance_; }       // const member
+    [[nodiscard]] const std::string&amp; owner() const noexcept { return owner_; }
+
+    // Static
+    static int active_count() { return active_; }
+
+    // Friend
+    friend std::ostream&amp; operator&lt;&lt;(std::ostream&amp;, const Account&amp;);
+
+private:
+    std::string owner_;
+    double      balance_ {0.0};        // default member initializer
+    inline static int active_ = 0;     // C++17: in-class static def
+};
+
+// Aggregate / designated initializers (C++20)
+struct Point { int x = 0, y = 0; };
+Point p1{1, 2};
+Point p2{.x = 1, .y = 2};      // designated init (C++20)
+Point p3{.y = 5};              // x defaults to 0
+
+// Delegating constructor
+class Foo {
+    int x_, y_;
+public:
+    Foo() : Foo(0, 0) {}                          // delegate
+    Foo(int x, int y) : x_(x), y_(y) {}
+};
+
+// Inheriting constructors
+class Derived : public Base { using Base::Base; };
+
+// explicit prevents implicit conversions
+explicit Account(double initial);  // Account a = 10.0;  // ERROR
+
+// Conversion operators
+class Money {
+public:
+    explicit operator double() const { return amount_; }
+private:
+    double amount_;
+};</code></pre>
+
+  <h2 class="section" id="special-members">Rule of 0 / 3 / 5 &mdash; copy &amp; move</h2>
+
+  <p>Six "special member functions" the compiler may generate:</p>
+  <ol>
+    <li>Default constructor &mdash; <code>T()</code></li>
+    <li>Destructor &mdash; <code>~T()</code></li>
+    <li>Copy constructor &mdash; <code>T(const T&amp;)</code></li>
+    <li>Copy assignment &mdash; <code>T&amp; operator=(const T&amp;)</code></li>
+    <li>Move constructor &mdash; <code>T(T&amp;&amp;) noexcept</code></li>
+    <li>Move assignment &mdash; <code>T&amp; operator=(T&amp;&amp;) noexcept</code></li>
+  </ol>
+
+  <div class="callout tip">
+    <strong>Rule of Zero:</strong> if all your members are RAII types (smart pointers, vectors, strings), define <em>none</em> of the special members &mdash; the defaults are correct.<br>
+    <strong>Rule of Five:</strong> if you must define one of {dtor, copy, move}, you almost certainly need all five.
+  </div>
+
+  <pre><code class="language-cpp">class Buffer {
+    std::size_t n_ = 0;
+    int* data_ = nullptr;
+public:
+    Buffer() = default;
+    explicit Buffer(std::size_t n) : n_(n), data_(new int[n]{}) {}
+
+    ~Buffer() { delete[] data_; }
+
+    Buffer(const Buffer&amp; o) : n_(o.n_), data_(new int[o.n_]) {
+        std::copy_n(o.data_, n_, data_);
+    }
+    Buffer&amp; operator=(const Buffer&amp; o) {
+        if (this == &amp;o) return *this;
+        Buffer tmp(o);           // copy-and-swap idiom
+        std::swap(n_, tmp.n_);
+        std::swap(data_, tmp.data_);
+        return *this;
+    }
+
+    Buffer(Buffer&amp;&amp; o) noexcept
+        : n_(std::exchange(o.n_, 0)),
+          data_(std::exchange(o.data_, nullptr)) {}
+    Buffer&amp; operator=(Buffer&amp;&amp; o) noexcept {
+        std::swap(n_, o.n_);
+        std::swap(data_, o.data_);
+        return *this;
+    }
+};
+
+// Or just delete them
+class NonCopyable {
+public:
+    NonCopyable(const NonCopyable&amp;) = delete;
+    NonCopyable&amp; operator=(const NonCopyable&amp;) = delete;
+};</code></pre>
+
+  <h4>Move semantics in two minutes</h4>
+  <ul>
+    <li><strong>lvalue</strong>: has a name, persists. <strong>rvalue</strong>: temporary, about to die.</li>
+    <li><code>T&amp;&amp;</code> binds to rvalues. Used for move constructors / assignment.</li>
+    <li><code>std::move(x)</code> is just a <code>static_cast&lt;T&amp;&amp;&gt;(x)</code> &mdash; it doesn't move anything; it tells overload resolution "treat <code>x</code> as a temporary".</li>
+    <li>After <code>std::move(x)</code>, <code>x</code> is in a <em>valid but unspecified</em> state. You can assign to it or destroy it; reading its value is a bug.</li>
+    <li><strong>Move operations should be <code>noexcept</code></strong> &mdash; <code>std::vector</code> only uses move during reallocation if it's noexcept; otherwise it copies.</li>
+  </ul>
+
+  <pre><code class="language-cpp">std::vector&lt;std::string&gt; v;
+std::string s = "hi";
+v.push_back(s);               // copy
+v.push_back(std::move(s));    // move &mdash; s now valid-but-unspecified
+v.emplace_back("new");        // construct in place
+
+// Perfect forwarding &mdash; preserve value category through a template
+template &lt;typename T&gt;
+void wrapper(T&amp;&amp; arg) {           // "forwarding reference"
+    callee(std::forward&lt;T&gt;(arg));  // forwards as lvalue or rvalue as bound
+}</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="inheritance">Inheritance, virtual, polymorphism</h2>
+
+  <pre><code class="language-cpp">class Shape {
+public:
+    virtual ~Shape() = default;                  // ALWAYS virtual dtor in base classes
+    virtual double area() const = 0;             // pure virtual
+    virtual std::string name() const { return "Shape"; }
+};
+
+class Circle : public Shape {
+    double r_;
+public:
+    explicit Circle(double r) : r_(r) {}
+    double area() const override { return 3.14159 * r_ * r_; }   // override is mandatory style
+    std::string name() const override { return "Circle"; }
+};
+
+class Square final : public Shape {              // final &mdash; cannot be derived from
+    double s_;
+public:
+    explicit Square(double s) : s_(s) {}
+    double area() const final { return s_ * s_; } // final &mdash; cannot be overridden
+    std::string name() const override { return "Square"; }
+};
+
+// Polymorphism requires a pointer / reference to base
+std::unique_ptr&lt;Shape&gt; sh = std::make_unique&lt;Circle&gt;(2.0);
+std::cout &lt;&lt; sh-&gt;area();          // virtual dispatch
+
+// Object slicing &mdash; assigning derived to base by value loses derived parts
+Circle c{2};
+Shape  s = c;                     // SLICED: s.area() calls Shape::area
+                                  // (or fails to compile if Shape is abstract)</code></pre>
+
+  <h4>Visibility &amp; inheritance modes</h4>
+  <table>
+    <tr><th>Access in base</th><th>public inh.</th><th>protected inh.</th><th>private inh.</th></tr>
+    <tr><td>public</td><td>public</td><td>protected</td><td>private</td></tr>
+    <tr><td>protected</td><td>protected</td><td>protected</td><td>private</td></tr>
+    <tr><td>private</td><td>hidden</td><td>hidden</td><td>hidden</td></tr>
+  </table>
+  <p class="muted">Use <code>public</code> inheritance for "is-a"; composition or private inheritance for "implemented in terms of".</p>
+
+  <h4>Casting between related types</h4>
+  <pre><code class="language-cpp">Base*  pb = new Derived;
+auto*  pd = static_cast&lt;Derived*&gt;(pb);    // no runtime check &mdash; UB if wrong
+auto*  pd2 = dynamic_cast&lt;Derived*&gt;(pb);  // returns nullptr (or throws for refs) if wrong
+const auto* cp = const_cast&lt;const Base*&gt;(pb);
+auto  bits = reinterpret_cast&lt;std::uintptr_t&gt;(pb); // last resort; rarely correct</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="smart-pointers">Smart pointers &amp; RAII</h2>
+
+  <p>The single most important modern C++ habit: never use raw <code>new</code>/<code>delete</code>. Use smart pointers and standard containers, which acquire in their constructor and release in their destructor.</p>
+
+  <pre><code class="language-cpp">#include &lt;memory&gt;
+
+// unique_ptr &mdash; exclusive ownership, zero overhead, move-only
+auto p = std::make_unique&lt;Widget&gt;(arg1, arg2);
+p-&gt;method();
+auto p2 = std::move(p);                  // transfer ownership
+// p is now nullptr
+
+std::unique_ptr&lt;int[]&gt; arr = std::make_unique&lt;int[]&gt;(100);  // dynamic array
+
+// shared_ptr &mdash; shared ownership, reference-counted (atomic, has overhead)
+auto sp = std::make_shared&lt;Widget&gt;();    // ONE allocation for object + control block
+auto sp2 = sp;                           // refcount: 2
+
+// weak_ptr &mdash; non-owning observer of a shared_ptr; breaks ref cycles
+std::weak_ptr&lt;Widget&gt; wp = sp;
+if (auto strong = wp.lock()) { use(*strong); }
+
+// Custom deleter
+auto file = std::unique_ptr&lt;FILE, decltype(&amp;std::fclose)&gt;(
+    std::fopen("x", "r"), &amp;std::fclose);
+
+// Why prefer make_unique / make_shared:
+//   - exception safety: f(new T, new U) can leak if one new throws
+//   - make_shared: single allocation, better cache locality
+//   - no naked `new`</code></pre>
+
+  <div class="callout warn">
+    <strong>Never:</strong> <code>shared_ptr&lt;T&gt; sp(raw_ptr); shared_ptr&lt;T&gt; sp2(raw_ptr);</code> &mdash; two control blocks, double-free. If you must wrap a raw pointer, do it exactly once.
+  </div>
+
+  <h4>RAII for arbitrary resources</h4>
+  <pre><code class="language-cpp">// Lock guard: locks mutex in ctor, unlocks in dtor
+{
+    std::lock_guard&lt;std::mutex&gt; lk(mu);
+    // critical section
+}  // unlocked here, even on exception
+
+// File: opens in ctor, closes in dtor
+std::ifstream in("x.txt");
+// implicit close at end of scope
+
+// Custom scope guard
+auto cleanup = std::unique_ptr&lt;void, std::function&lt;void(void*)&gt;&gt;(
+    (void*)1, [](void*){ std::cout &lt;&lt; "exit\n"; });</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="templates">Templates</h2>
+
+  <pre><code class="language-cpp">// Function template
+template &lt;typename T&gt;
+T max_of(T a, T b) { return a &gt; b ? a : b; }
+
+auto x = max_of(1, 2);              // T = int (deduced)
+auto y = max_of&lt;double&gt;(1, 2.0);    // explicit
+
+// Class template
+template &lt;typename T, std::size_t N&gt;
+class Stack {
+    std::array&lt;T, N&gt; data_;
+    std::size_t      top_ = 0;
+public:
+    void push(const T&amp; v) { data_[top_++] = v; }
+    T    pop()            { return data_[--top_]; }
+    bool empty() const    { return top_ == 0; }
+};
+
+Stack&lt;int, 16&gt; s;
+
+// Template specialization
+template &lt;&gt; class Stack&lt;bool, 32&gt; { /* packed implementation */ };
+
+// Default template arguments
+template &lt;typename T, typename Alloc = std::allocator&lt;T&gt;&gt;
+class MyVector { /* ... */ };
+
+// Variadic templates &amp; fold expressions (C++17)
+template &lt;typename... Args&gt;
+auto sum(Args... args) {
+    return (args + ... + 0);        // unary right fold with init
+}
+sum(1, 2, 3, 4);                    // 10
+
+template &lt;typename... Args&gt;
+void print_all(Args&amp;&amp;... args) {
+    ((std::cout &lt;&lt; args &lt;&lt; ' '), ...);   // comma fold
+}
+
+// Template aliases
+template &lt;typename T&gt;
+using vec = std::vector&lt;T&gt;;
+vec&lt;int&gt; v;
+
+// NTTP &mdash; non-type template parameter
+template &lt;int N&gt; struct Array { int data[N]; };
+template &lt;std::size_t N&gt; constexpr auto factorial = N * factorial&lt;N - 1&gt;;
+template &lt;&gt; constexpr auto factorial&lt;0&gt; = 1;</code></pre>
+
+  <h4>SFINAE (legacy) vs Concepts (modern)</h4>
+  <pre><code class="language-cpp">// Old: enable_if &mdash; failed substitution removes the overload
+template &lt;typename T,
+          typename = std::enable_if_t&lt;std::is_integral_v&lt;T&gt;&gt;&gt;
+T twice(T x) { return x + x; }
+
+// New (C++20): requires-clause / concepts
+template &lt;std::integral T&gt;
+T twice(T x) { return x + x; }</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="concepts">Concepts <span class="pill">C++20</span></h2>
+
+  <p>Concepts are named, compile-time predicates on template arguments. They produce <em>good</em> error messages and document intent.</p>
+
+  <pre><code class="language-cpp">#include &lt;concepts&gt;
+
+// Standard concepts (a sampling):
+//   std::integral, std::floating_point, std::signed_integral
+//   std::same_as&lt;T, U&gt;, std::convertible_to&lt;From, To&gt;
+//   std::derived_from&lt;D, B&gt;
+//   std::default_initializable, std::copyable, std::movable
+//   std::equality_comparable, std::totally_ordered
+//   std::invocable&lt;F, Args...&gt;, std::predicate&lt;F, Args...&gt;
+//   std::ranges::range, std::ranges::input_range, ...
+
+// Three equivalent ways to constrain a template:
+template &lt;std::integral T&gt;          T abs1(T x) { return x &lt; 0 ? -x : x; }
+template &lt;typename T&gt; requires std::integral&lt;T&gt;
+T abs2(T x) { return x &lt; 0 ? -x : x; }
+auto abs3(std::integral auto x) { return x &lt; 0 ? -x : x; }  // abbreviated
+
+// Defining a concept with requires-expression
+template &lt;typename T&gt;
+concept Addable = requires(T a, T b) {
+    { a + b } -&gt; std::same_as&lt;T&gt;;        // expression must compile, return T
+    requires sizeof(T) &lt;= 16;            // nested constraint
+};
+
+template &lt;Addable T&gt;
+T sum(T a, T b) { return a + b; }
+
+// Overload selection picks the most-constrained matching version
+template &lt;std::integral T&gt;        void f(T) { /* ints */ }
+template &lt;std::floating_point T&gt;  void f(T) { /* floats */ }
+template &lt;typename T&gt;             void f(T) { /* fallback */ }</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="crtp">Idioms: CRTP, PIMPL, Tag dispatch</h2>
+
+  <h4>CRTP &mdash; Curiously Recurring Template Pattern (static polymorphism)</h4>
+  <pre><code class="language-cpp">template &lt;typename Derived&gt;
+class Comparable {
+public:
+    bool operator!=(const Derived&amp; o) const {
+        return !static_cast&lt;const Derived&amp;&gt;(*this).operator==(o);
+    }
+};
+
+class Money : public Comparable&lt;Money&gt; {
+    int cents_;
+public:
+    bool operator==(const Money&amp; o) const { return cents_ == o.cents_; }
+};
+// Money inherits != for free, no virtual call.</code></pre>
+
+  <h4>PIMPL &mdash; Pointer to Implementation (compile-firewall)</h4>
+  <pre><code class="language-cpp">// widget.hpp
+class Widget {
+public:
+    Widget();
+    ~Widget();
+    void draw();
+private:
+    struct Impl;
+    std::unique_ptr&lt;Impl&gt; pimpl_;
+};
+
+// widget.cpp
+struct Widget::Impl { /* heavy includes here */ };
+Widget::Widget() : pimpl_(std::make_unique&lt;Impl&gt;()) {}
+Widget::~Widget() = default;             // must be in .cpp where Impl is complete
+void Widget::draw() { /* use pimpl_ */ }</code></pre>
+
+  <h4>Copy-and-swap</h4>
+  <p>One operator= that handles both copy and self-assignment safely. Shown above in <a href="#special-members">Rule of Five</a>.</p>
+
+  <h4>Tag dispatch</h4>
+  <pre><code class="language-cpp">struct fast_tag{}; struct safe_tag{};
+void impl(int x, fast_tag) { /* ... */ }
+void impl(int x, safe_tag) { /* ... */ }
+template &lt;typename Tag&gt; void run(int x) { impl(x, Tag{}); }</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="cpp20-ranges">Ranges deep-dive <span class="pill">C++20</span></h2>
+
+  <pre><code class="language-cpp">#include &lt;ranges&gt;
+#include &lt;vector&gt;
+#include &lt;iostream&gt;
+namespace v = std::views;
+
+std::vector&lt;int&gt; nums{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+// Pipeline composition
+auto result = nums
+    | v::filter([](int x){ return x % 2 == 0; })   // 2,4,6,8,10
+    | v::transform([](int x){ return x * x; })     // 4,16,36,64,100
+    | v::take(3);                                  // 4,16,36
+
+for (int x : result) std::cout &lt;&lt; x &lt;&lt; ' ';
+
+// Materialize a view into a container (C++23: ranges::to)
+std::vector&lt;int&gt; out(result.begin(), result.end());
+
+// Common factories
+v::iota(1)                  // infinite: 1,2,3,...
+v::iota(0, 5)               // 0,1,2,3,4
+v::single(42)               // just {42}
+v::empty&lt;int&gt;               // empty range
+
+// Common adaptors
+v::reverse, v::take(n), v::drop(n), v::take_while(pred), v::drop_while(pred)
+v::filter(pred), v::transform(fn)
+v::join, v::split(sep), v::common, v::elements&lt;I&gt;, v::keys, v::values
+v::all, v::counted(it, n)</code></pre>
+
+  <h2 class="section" id="cpp20-coroutines">Coroutines <span class="pill">C++20</span></h2>
+
+  <p>Coroutines are functions that can suspend and resume. C++20 ships the <em>machinery</em> (<code>co_await</code>, <code>co_yield</code>, <code>co_return</code>) but very little library &mdash; you typically use a coroutine library (cppcoro, asio, libunifex) or write your own promise types.</p>
+
+  <pre><code class="language-cpp">#include &lt;coroutine&gt;
+
+// A bare-bones generator (C++23 has std::generator)
+template &lt;typename T&gt;
+struct Generator {
+    struct promise_type {
+        T current;
+        Generator get_return_object() { return Generator{handle::from_promise(*this)}; }
+        std::suspend_always initial_suspend() noexcept { return {}; }
+        std::suspend_always final_suspend()   noexcept { return {}; }
+        std::suspend_always yield_value(T v) { current = std::move(v); return {}; }
+        void return_void() {}
+        void unhandled_exception() { std::terminate(); }
+    };
+    using handle = std::coroutine_handle&lt;promise_type&gt;;
+    handle h;
+    explicit Generator(handle h) : h(h) {}
+    ~Generator() { if (h) h.destroy(); }
+    bool next() { h.resume(); return !h.done(); }
+    T value() const { return h.promise().current; }
+};
+
+Generator&lt;int&gt; ints(int from, int to) {
+    for (int i = from; i &lt; to; ++i) co_yield i;
+}
+
+// Usage
+for (auto g = ints(0, 5); g.next(); ) {
+    std::cout &lt;&lt; g.value() &lt;&lt; '\n';
+}</code></pre>
+
+  <p class="muted">In practice, treat C++20 coroutines as a <em>protocol</em> the language supports; the actual abstractions (tasks, generators, async I/O) come from a library.</p>
+
+  <h2 class="section" id="cpp20-modules">Modules <span class="pill">C++20</span></h2>
+
+  <p>Modules replace <code>#include</code> with a proper module system: faster builds, no macro leakage, explicit exports. Tooling support is still maturing (GCC 14+, Clang 16+, MSVC OK).</p>
+
+  <pre><code class="language-cpp">// math.cppm  &mdash; module interface unit
+export module math;
+
+export int add(int a, int b) { return a + b; }
+export int sub(int a, int b) { return a - b; }
+
+int internal() { return 42; }     // not exported
+
+// main.cpp
+import math;
+import std;                       // C++23 standard library module
+
+int main() {
+    std::cout &lt;&lt; add(1, 2) &lt;&lt; '\n';
+}</code></pre>
+
+  <h2 class="section" id="cpp20-misc">format, span, spaceship, more <span class="pill">C++20</span></h2>
+
+  <pre><code class="language-cpp">// std::format &mdash; Python-style, type-safe
+#include &lt;format&gt;
+auto s = std::format("{1} {0} ({2:.3f})", "world", "hello", 3.14159);
+auto h = std::format("hex: {:#010x}", 0xABCDu);    // "hex: 0x0000abcd"
+
+// std::span &mdash; non-owning view over contiguous data
+#include &lt;span&gt;
+void process(std::span&lt;int&gt; data);                   // dynamic extent
+void process_fixed(std::span&lt;int, 8&gt; data);          // static extent
+
+// Three-way comparison &mdash; spaceship operator
+#include &lt;compare&gt;
+struct Version {
+    int major, minor, patch;
+    auto operator&lt;=&gt;(const Version&amp;) const = default;   // generates &lt; &lt;= &gt; &gt;= == !=
+};
+
+// Designated initializers
+struct Cfg { int width = 80, height = 24; bool color = true; };
+Cfg c{.width = 120, .color = false};
+
+// constinit / consteval &mdash; see Variables section.
+
+// &lt;bit&gt; &mdash; bit manipulation
+#include &lt;bit&gt;
+std::popcount(0b1011u);            // 3
+std::countl_zero(0x0F'00'00'00u);  // 4
+std::bit_ceil(5u);                 // 8 &mdash; next power of two
+std::has_single_bit(8u);           // true
+auto f = std::bit_cast&lt;float&gt;(0x40490FDBu);   // type-safe reinterpret
+
+// &lt;numbers&gt; &mdash; math constants
+#include &lt;numbers&gt;
+auto pi = std::numbers::pi;
+auto e  = std::numbers::e;
+
+// &lt;chrono&gt; &mdash; calendar &amp; timezone
+#include &lt;chrono&gt;
+using namespace std::chrono;
+auto today = floor&lt;days&gt;(system_clock::now());
+auto ymd   = year_month_day{today};
+auto t     = sys_days{February/29/2024};
+auto dur   = 1h + 30min;</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="threads">Threads &amp; jthread</h2>
+
+  <pre><code class="language-cpp">#include &lt;thread&gt;
+
+void worker(int id, std::string msg) { /* ... */ }
+
+std::thread t(worker, 1, "hi");
+t.join();                              // MUST join or detach before destructor
+
+// jthread (C++20) &mdash; joins automatically in dtor, supports cooperative cancellation
+#include &lt;stop_token&gt;
+std::jthread jt([](std::stop_token st) {
+    while (!st.stop_requested()) {
+        // do work
+    }
+});
+jt.request_stop();                     // (also automatic on destruction)
+
+// Hardware concurrency hint
+auto n = std::thread::hardware_concurrency();
+
+// Sleeping
+std::this_thread::sleep_for(std::chrono::milliseconds(100));
+std::this_thread::yield();</code></pre>
+
+  <h2 class="section" id="sync">Mutexes, locks, atomics</h2>
+
+  <pre><code class="language-cpp">#include &lt;mutex&gt;
+#include &lt;shared_mutex&gt;
+#include &lt;atomic&gt;
+#include &lt;condition_variable&gt;
+
+std::mutex          m;
+std::shared_mutex   rwm;   // reader/writer
+std::recursive_mutex rm;   // re-lockable by same thread (avoid if you can)
+
+{
+    std::lock_guard      lk(m);        // simplest, RAII
+    std::unique_lock     ul(m);        // can unlock/re-lock, transfer to cv
+    std::scoped_lock     sl(m, rm);    // multiple mutexes, deadlock-free
+    std::shared_lock     sh(rwm);      // shared (reader) lock
+}
+
+// Atomics &mdash; lock-free where possible
+std::atomic&lt;int&gt; counter{0};
+counter.fetch_add(1, std::memory_order_relaxed);
+++counter;                             // sequentially consistent
+int expected = 0;
+counter.compare_exchange_strong(expected, 1);
+
+// Memory orders: relaxed &lt; acquire/release &lt; acq_rel &lt; seq_cst (default)
+// Default seq_cst unless you can prove you need otherwise.
+
+// Condition variable
+std::condition_variable cv;
+bool ready = false;
+{
+    std::unique_lock lk(m);
+    cv.wait(lk, []{ return ready; });   // unlocks while waiting; re-locks before predicate
+}
+{
+    std::lock_guard lk(m);
+    ready = true;
+}
+cv.notify_one();                        // or notify_all
+
+// call_once &mdash; thread-safe initialization
+std::once_flag init_flag;
+std::call_once(init_flag, []{ /* runs exactly once */ });
+
+// New synchronization primitives (C++20)
+#include &lt;latch&gt;        // single-use countdown
+#include &lt;barrier&gt;      // reusable phase barrier
+#include &lt;semaphore&gt;    // std::counting_semaphore, std::binary_semaphore</code></pre>
+
+  <h2 class="section" id="async">async, future, promise</h2>
+
+  <pre><code class="language-cpp">#include &lt;future&gt;
+
+// async &mdash; "run this and give me a future to its result"
+auto fut = std::async(std::launch::async, []{ return compute(); });
+int  result = fut.get();           // blocks until ready
+
+// packaged_task &mdash; wrap a callable to produce a future
+std::packaged_task&lt;int(int)&gt; task([](int x){ return x*x; });
+auto f = task.get_future();
+std::thread(std::move(task), 5).detach();
+int v = f.get();                   // 25
+
+// promise &mdash; the producer side
+std::promise&lt;int&gt; p;
+auto pf = p.get_future();
+std::thread([&amp;]{ p.set_value(42); }).detach();
+pf.get();</code></pre>
+
+  <div class="callout warn">
+    <strong>Don't ignore <code>std::async</code>'s policy:</strong> <code>std::async(f)</code> without an explicit policy may run <em>lazily</em> on <code>get()</code>. Always pass <code>std::launch::async</code> if you mean it.
+  </div>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="idioms">Idioms cheat sheet</h2>
+
+  <table>
+    <tr><th>Idiom</th><th>What &amp; why</th></tr>
+    <tr><td>RAII</td><td>Resources tied to object lifetime. Constructor acquires, destructor releases. Exception-safe by default.</td></tr>
+    <tr><td>Rule of 0</td><td>Use member types that handle their own resources; define no special members.</td></tr>
+    <tr><td>Rule of 5</td><td>If you define one of {dtor, copy ctor, copy =, move ctor, move =}, define all five.</td></tr>
+    <tr><td>Copy-and-swap</td><td>operator= as: construct tmp, swap members, return *this. Handles self-assignment &amp; gives strong exception guarantee.</td></tr>
+    <tr><td>Pass-by-value-then-move</td><td>Single constructor handles lvalue (copy) and rvalue (move) cases via <code>std::move</code>.</td></tr>
+    <tr><td>Perfect forwarding</td><td><code>template&lt;typename T&gt; void f(T&amp;&amp; x){ g(std::forward&lt;T&gt;(x)); }</code></td></tr>
+    <tr><td>SBO / small-buffer optimization</td><td>std::string/std::function store small payloads inline. Avoid copies that defeat it.</td></tr>
+    <tr><td>EBO &mdash; empty base optimization</td><td>Inheriting from empty stateless types (allocators, deleters) takes 0 extra bytes.</td></tr>
+    <tr><td>PIMPL</td><td>Hide implementation behind <code>unique_ptr&lt;Impl&gt;</code> for ABI stability and faster recompiles.</td></tr>
+    <tr><td>CRTP</td><td>Static polymorphism &mdash; base templated on derived. Mixins without virtual cost.</td></tr>
+    <tr><td>Tag dispatch / if constexpr</td><td>Compile-time branching by type instead of <code>std::enable_if</code>.</td></tr>
+    <tr><td>Type erasure</td><td><code>std::function</code>, <code>std::any</code>, custom AnyXxx&mdash;hide concrete type behind a virtual interface or vtable-like dispatch.</td></tr>
+  </table>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="pitfalls">Pitfalls, UB, and surprises</h2>
+
+  <ul>
+    <li><strong>Iterator invalidation.</strong> <code>vector::push_back</code> can reallocate, invalidating all iterators/references/pointers. <code>map::insert</code> never invalidates existing iterators (except for the affected node on erase).</li>
+    <li><strong>Dangling references.</strong> <code>auto&amp; x = make_temp();</code> is fine only with const-ref-to-temporary lifetime extension. <code>std::string_view sv = std::string("hi");</code> dangles immediately.</li>
+    <li><strong>Object slicing.</strong> Storing derived in a base-by-value loses the derived parts and disables virtual dispatch.</li>
+    <li><strong>Most vexing parse.</strong> <code>Widget w();</code> declares a function, not an object. Use <code>Widget w;</code> or <code>Widget w{};</code>.</li>
+    <li><strong>Initialization order across TUs.</strong> Order of construction of globals across translation units is undefined. Use the construct-on-first-use idiom (Meyers singleton) or <code>constinit</code>.</li>
+    <li><strong>Signed/unsigned mixing.</strong> <code>for (int i = 0; i &lt; v.size(); ++i)</code> compares signed to unsigned. Use <code>std::ssize(v)</code> or <code>std::size_t</code>.</li>
+    <li><strong>operator[] on map creates entries.</strong> Use <code>find</code> or <code>contains</code> when you just want to check.</li>
+    <li><strong>Auto-deducing the wrong type.</strong> <code>auto x = matrix[i];</code> may copy a proxy. Prefer <code>decltype(auto)</code> or explicit types when proxies are involved.</li>
+    <li><strong>Captured-by-reference lambda outlives its captures.</strong> Storing <code>[&amp;]</code> lambdas in containers / handing them to other threads is dangerous.</li>
+    <li><strong>Returning <code>std::move</code> of a local.</strong> Don't. Named Return Value Optimization (NRVO) elides the copy/move; <code>std::move</code> inhibits NRVO.</li>
+    <li><strong>Two <code>shared_ptr</code> from one raw pointer.</strong> Double-free. Use <code>make_shared</code> or transfer through a unique_ptr.</li>
+    <li><strong>Static initialization order across DLLs.</strong> Especially on Windows. Be very careful with globals in shared libraries.</li>
+    <li><strong>Throwing from destructors.</strong> Calls <code>std::terminate</code> if it happens during another unwind.</li>
+    <li><strong>Strict aliasing.</strong> Accessing an object through a pointer of a different (non-compatible) type is UB. Use <code>std::bit_cast</code> (C++20) or <code>std::memcpy</code>.</li>
+    <li><strong>Data races on a single non-atomic.</strong> Even if you "think" the value is safely racing. Compiler may reorder reads/writes; the result is UB.</li>
+    <li><strong>Self-move.</strong> <code>x = std::move(x);</code> is technically allowed (target left in valid-but-unspecified state) but almost always a bug.</li>
+  </ul>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="interview">Interview Q&amp;A flash cards</h2>
+
+  <h4>What's the difference between <code>std::vector</code> and <code>std::array</code>?</h4>
+  <p><code>vector</code> is dynamically sized, heap-allocated, growable. <code>array</code> is fixed-size at compile time, lives on the stack (or wherever it's declared), with no allocator and no growth. <code>array</code> beats <code>vector</code> when the size is known and small/medium; <code>vector</code> when size varies or you need ownership semantics with move.</p>
+
+  <h4>When should a destructor be virtual?</h4>
+  <p>Whenever the class is intended to be a polymorphic base &mdash; i.e., if anyone might delete a derived object through a base pointer. Without it, the destructor call is non-virtual, only <code>~Base</code> runs, and the derived destructor never executes &rarr; UB / leaks.</p>
+
+  <h4><code>std::unique_ptr</code> vs <code>std::shared_ptr</code>?</h4>
+  <p><code>unique_ptr</code> models exclusive ownership; it's move-only and has zero overhead vs a raw pointer. <code>shared_ptr</code> models shared ownership via an atomic reference count, with a control block allocated separately (unless you use <code>make_shared</code>, which fuses them). Prefer <code>unique_ptr</code> by default; reach for <code>shared_ptr</code> only when ownership truly is shared.</p>
+
+  <h4>What's an rvalue reference and why do we need them?</h4>
+  <p><code>T&amp;&amp;</code> binds to rvalues (temporaries). They enable move semantics: a function can detect "this argument is about to die" and steal its resources instead of copying. They also enable perfect forwarding via "forwarding references" (also written <code>T&amp;&amp;</code>) in templates.</p>
+
+  <h4>Explain RAII.</h4>
+  <p>Resource Acquisition Is Initialization. Bind the lifetime of a resource (heap memory, file handle, lock, socket) to an object's lifetime: acquire in the constructor, release in the destructor. The stack unwinds correctly on exceptions, so cleanup is automatic. RAII is the foundation of exception-safe C++.</p>
+
+  <h4>Why does <code>std::vector::push_back</code> sometimes invalidate iterators?</h4>
+  <p>If the vector's <code>size() == capacity()</code>, <code>push_back</code> allocates a new buffer, moves/copies existing elements over, and frees the old buffer. All previous iterators, pointers, and references to the vector's elements are now dangling.</p>
+
+  <h4><code>const T&amp;</code> vs <code>T</code> for function parameters?</h4>
+  <p>Pass small/trivially-copyable types by value (<code>int</code>, <code>std::string_view</code>, <code>std::span</code>). Pass larger types by <code>const T&amp;</code> to avoid the copy. The "pass-by-value-then-move" idiom is appropriate for sink parameters (constructors taking strings, etc.).</p>
+
+  <h4>What's the difference between <code>std::move</code> and <code>std::forward</code>?</h4>
+  <p><code>std::move</code> unconditionally casts to an rvalue reference &mdash; you say "I'm done with this." <code>std::forward&lt;T&gt;</code> conditionally casts based on the deduced template parameter <code>T</code>, preserving whether the original argument was an lvalue or rvalue. Use <code>std::forward</code> only with forwarding references in templates.</p>
+
+  <h4>Difference between <code>map</code> and <code>unordered_map</code>?</h4>
+  <p><code>map</code> is a balanced BST (typically red-black), keys are ordered, all operations are O(log n), and iteration is in sorted order. <code>unordered_map</code> is a hash table, O(1) average, O(n) worst, no ordering, needs a hash function. Use <code>map</code> when you need order or when keys are not easily hashable.</p>
+
+  <h4>What is a virtual function table (vtable)?</h4>
+  <p>The compiler implements virtual dispatch by giving each polymorphic class a hidden table of function pointers (the vtable). Each instance carries a hidden pointer (vptr) to its class's vtable. Calling <code>p-&gt;foo()</code> on a base pointer indirects through the vptr to call the correct override. Cost: one extra indirection per virtual call and one pointer per object.</p>
+
+  <h4>Why is <code>noexcept</code> important on move operations?</h4>
+  <p>STL containers (<code>vector</code>, etc.) use the strong exception guarantee. If a move can throw, the container falls back to copying during reallocation. Marking moves <code>noexcept</code> enables containers to move-relocate, which is much cheaper for non-trivial types.</p>
+
+  <h4>What is the One Definition Rule (ODR)?</h4>
+  <p>Every entity (function, variable, type) must have exactly one definition in the program, with limited exceptions (inline functions, templates, classes in different TUs &mdash; but the definitions must be token-identical). Violating ODR is UB and often produces nasty linker or runtime bugs.</p>
+
+  <h4>What's the difference between <code>constexpr</code> and <code>consteval</code>?</h4>
+  <p><code>constexpr</code> functions <em>may</em> be evaluated at compile time if their arguments are compile-time constants; otherwise they run at runtime. <code>consteval</code> functions <em>must</em> be evaluated at compile time &mdash; runtime invocation is an error.</p>
+
+  <h4>Why prefer <code>emplace_back</code> over <code>push_back</code>?</h4>
+  <p><code>emplace_back</code> forwards its arguments to the element's constructor, constructing the object in place inside the vector. <code>push_back</code> takes an already-constructed object and copies/moves it in. For types with non-trivial constructors this saves a move; for trivially copyable types the two are equivalent.</p>
+
+  <h4>Differences between <code>static_cast</code>, <code>dynamic_cast</code>, <code>reinterpret_cast</code>, <code>const_cast</code>?</h4>
+  <p><code>static_cast</code>: compile-time, between related types (e.g., numeric, up/down a hierarchy without RTTI check) &mdash; unchecked. <code>dynamic_cast</code>: runtime, only for polymorphic types, returns null/throws on failure &mdash; uses RTTI. <code>reinterpret_cast</code>: bitwise re-interpretation (between unrelated pointer types, int &harr; pointer) &mdash; almost never portable. <code>const_cast</code>: add/remove const &mdash; modifying an originally-const object through it is UB.</p>
+
+  <h4>Why is <code>std::shared_ptr</code> control block separate (without <code>make_shared</code>)?</h4>
+  <p>When you write <code>shared_ptr&lt;T&gt; sp(new T);</code>, the <code>T</code> and the control block (refcount, weak count, deleter) are two separate allocations. <code>make_shared&lt;T&gt;()</code> fuses them into a single allocation, improving locality and saving an alloc &mdash; but the memory can't be freed until both strong and weak counts hit zero.</p>
+
+  <h4>What's a "forwarding reference"?</h4>
+  <p>A <code>T&amp;&amp;</code> where <code>T</code> is a template parameter <em>being deduced</em>. Reference collapsing rules make it bind to lvalues (yielding <code>T&amp;</code>) or rvalues (yielding <code>T&amp;&amp;</code>). Combined with <code>std::forward&lt;T&gt;(x)</code>, this preserves the value category of the original argument through the call.</p>
+
+  <h4>What problem do concepts solve?</h4>
+  <p>Template error messages and overload resolution. Before concepts, constraining a template required SFINAE tricks like <code>std::enable_if</code>, with cryptic errors when constraints failed. Concepts give you readable names (<code>std::integral</code>), readable errors ("constraint not satisfied"), and proper overload selection by specificity of constraints.</p>
+
+  <h4>Why are coroutines useful?</h4>
+  <p>They let you write asynchronous and lazy-sequence code in a linear, straight-line style &mdash; no explicit callbacks or continuations. The compiler transforms the function into a state machine that suspends at <code>co_await</code> / <code>co_yield</code> and resumes when its result is ready, while preserving local variables.</p>
+
+  <h4>How does C++ handle multiple inheritance and the diamond problem?</h4>
+  <p>By default, each base class is a distinct sub-object; with diamond inheritance <code>D : B1, B2</code> where both inherit <code>A</code>, <code>D</code> contains two <code>A</code>s. Use <code>virtual</code> inheritance (<code>class B1 : virtual public A</code>) to share a single <code>A</code> sub-object. Virtual inheritance has runtime/size costs and complicates constructors (most-derived class initializes the virtual base).</p>
+
+  <h4>What is type erasure?</h4>
+  <p>A technique for storing or operating on values of unrelated types behind a uniform interface, without virtual inheritance from a common base. Examples: <code>std::function</code> erases any callable with a matching signature; <code>std::any</code> erases any copyable type. Internally, type erasure typically uses an owned heap object plus a vtable-like dispatch table.</p>
+
+  <h4>When should I use <code>std::optional</code> vs a pointer vs exceptions?</h4>
+  <p><code>std::optional&lt;T&gt;</code> for "may have a value" where ownership is by value and absence is expected (parse, lookup that may miss). Pointer / <code>std::optional&lt;T*&gt;</code> for non-owning references that may be absent. Exceptions for <em>exceptional</em>, unexpected, hard-to-handle locally errors &mdash; not for control flow.</p>
+
+  <h2 class="section" id="end">&nbsp;</h2>
+  <p class="muted">End of reference. Compiled mentally with C++20 (GCC 13+, Clang 16+, MSVC 19.30+). Where notes say <span class="pill">C++20</span> the feature was introduced in that standard.</p>
+
+  </main>
+</div>
+
+<script>
+  // Syntax highlighting
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('pre code').forEach(block => {
+      if (!block.classList.contains('hljs')) {
+        if (!block.className.match(/language-/)) block.classList.add('language-cpp');
+        hljs.highlightElement(block);
+      }
+      // Add copy button
+      const pre = block.parentElement;
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = 'copy';
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(block.innerText).then(() => {
+          btn.textContent = 'copied';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1200);
+        });
+      });
+      pre.appendChild(btn);
+    });
+  });
+</script>
+</body>
+</html>
