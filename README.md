@@ -40,7 +40,9 @@ A single-file HTML reference guide for modern C++ (C++20), covering everything f
 
 ## Usage
 
-Open `cpp20-cheatsheet.html` directly in any modern browser — no build step or server required.
+**Live site:** [https://jtraut.github.io/Cpp20-Cheatsheet/](https://jtraut.github.io/Cpp20-Cheatsheet/)
+
+Or open `cpp20-cheatsheet.html` directly in any modern browser — no build step or server required.
 
 The sidebar provides quick navigation to any section. Code blocks include syntax highlighting (via [highlight.js](https://highlightjs.org/)) and a copy button.
 
