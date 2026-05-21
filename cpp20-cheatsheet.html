@@ -583,7 +583,7 @@ std::vector&lt;int&gt; v(10); sum(v);
 sum(arr);</code></pre>
 
   <!-- ================================================================== -->
-  <h2 class="section" id="containers">STL containers</h2>
+  <h2 class="section" id="containers">STL containers (Standard Template Library)</h2>
 
   <table>
     <tr><th>Container</th><th>When to use</th><th>Notes</th></tr>
@@ -788,7 +788,7 @@ v::zip                      // C++23</code></pre>
   </div>
 
   <!-- ================================================================== -->
-  <h2 class="section" id="algorithms">STL algorithms</h2>
+  <h2 class="section" id="algorithms">STL algorithms (Standard Template Library)</h2>
 
   <p>Always prefer an algorithm over a hand-written loop &mdash; clearer intent and often faster.</p>
 
@@ -1047,7 +1047,7 @@ const auto* cp = const_cast&lt;const Base*&gt;(pb);
 auto  bits = reinterpret_cast&lt;std::uintptr_t&gt;(pb); // last resort; rarely correct</code></pre>
 
   <!-- ================================================================== -->
-  <h2 class="section" id="smart-pointers">Smart pointers &amp; RAII</h2>
+  <h2 class="section" id="smart-pointers">Smart pointers &amp; RAII (Resource Acquisition Is Initialization)</h2>
 
   <p>The single most important modern C++ habit: never use raw <code>new</code>/<code>delete</code>. Use smart pointers and standard containers, which acquire in their constructor and release in their destructor.</p>
 
@@ -1149,7 +1149,7 @@ template &lt;int N&gt; struct Array { int data[N]; };
 template &lt;std::size_t N&gt; constexpr auto factorial = N * factorial&lt;N - 1&gt;;
 template &lt;&gt; constexpr auto factorial&lt;0&gt; = 1;</code></pre>
 
-  <h4>SFINAE (legacy) vs Concepts (modern)</h4>
+  <h4>SFINAE (Substitution Failure Is Not An Error) (legacy) vs Concepts (modern)</h4>
   <pre><code class="language-cpp">// Old: enable_if &mdash; failed substitution removes the overload
 template &lt;typename T,
           typename = std::enable_if_t&lt;std::is_integral_v&lt;T&gt;&gt;&gt;
@@ -1498,7 +1498,7 @@ pf.get();</code></pre>
   </table>
 
   <!-- ================================================================== -->
-  <h2 class="section" id="pitfalls">Pitfalls, UB, and surprises</h2>
+  <h2 class="section" id="pitfalls">Pitfalls, UB (Undefined Behavior), and surprises</h2>
 
   <ul>
     <li><strong>Iterator invalidation.</strong> <code>vector::push_back</code> can reallocate, invalidating all iterators/references/pointers. <code>map::insert</code> never invalidates existing iterators (except for the affected node on erase).</li>
