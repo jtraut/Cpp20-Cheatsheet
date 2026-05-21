@@ -20,6 +20,7 @@ A single-file HTML reference guide for modern C++ (C++20), covering everything f
 - **Iterators & ranges** — iterators, range-based algorithms, views (C++20)
 - **STL algorithms** — sort, find, transform, reduce, and more
 - **Complexity reference** — big-O for common containers and operations
+- **Algorithm patterns** — sliding window, two pointers, prefix sum, binary search, hashmap, BFS, DFS, top K elements
 - **Classes & structs** — constructors, member functions, `explicit`, `friend`
 - **Rule of 0 / 3 / 5** — copy, move, RAII
 - **Inheritance & polymorphism** — `virtual`, `override`, `final`, vtables
