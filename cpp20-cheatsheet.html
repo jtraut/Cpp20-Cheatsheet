@@ -783,6 +783,39 @@ v::elements&lt;0&gt;              // for ranges of tuples/pairs &mdash; .first
 v::keys, v::values          // for map-like ranges
 v::zip                      // C++23</code></pre>
 
+  <h4>Explicit iterator loops &amp; slicing</h4>
+  <pre><code class="language-cpp">std::vector&lt;int&gt; v{10, 20, 30, 40, 50};
+
+// Basic iterator loop — *it dereferences to the element value
+for (auto it = v.begin(); it != v.end(); ++it) {
+    auto val = *it;   // read; use *it = x; to write
+}
+
+// Skip first element (begin + 1)
+for (auto it = v.begin() + 1; it != v.end(); ++it) { /*  20 30 40 50  */ }
+
+// Skip first N elements
+int n = 2;
+for (auto it = std::next(v.begin(), n); it != v.end(); ++it) { /* 30 40 50 */ }
+// or: v.begin() + n   (only random-access containers like vector/array)
+
+// Skip last element (end - 1)
+for (auto it = v.begin(); it != std::prev(v.end()); ++it) { /* 10 20 30 40 */ }
+
+// Skip last N elements
+for (auto it = v.begin(); it != std::prev(v.end(), n); ++it) { /* 10 20 30 */ }
+// or: v.end() - n   (only random-access containers)
+
+// C++20 views — same results, no iterator ceremony
+for (int x : v | std::views::drop(1))       { /* 20 30 40 50 */ }
+for (int x : v | std::views::drop_while([&](int){ return &x == &v[0]; })) { }
+for (int x : v | std::views::take(v.size() - 1)) { /* 10 20 30 40 */ }
+for (int x : v | std::views::drop(n) | std::views::take(v.size() - n - n)) { }</code></pre>
+
+  <div class="callout tip">
+    <strong>Prefer <code>std::next</code>/<code>std::prev</code></strong> over raw <code>+ n</code> arithmetic &mdash; they work on any iterator category (e.g. <code>std::list</code>), while <code>+ n</code> only compiles for random-access iterators like <code>vector</code> and <code>array</code>.
+  </div>
+
   <div class="callout tip">
     <strong>Ranges advantage:</strong> no more <code>auto it = ...; auto end = ...;</code> ceremony. <code>std::ranges::sort(v)</code> sorts the whole container, and pipelines compose with <code>|</code>.
   </div>
