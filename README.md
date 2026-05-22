@@ -24,6 +24,7 @@ A single-file HTML reference guide for modern C++ (C++20), covering everything f
 - **Classes & structs** — constructors, member functions, `explicit`, `friend`
 - **Rule of 0 / 3 / 5** — copy, move, RAII
 - **Inheritance & polymorphism** — `virtual`, `override`, `final`, vtables
+- **Dynamic memory** — `new` vs `malloc` / `calloc`: initialization, params, overflow safety, when to use each; placement `new`; `realloc` caveats
 - **Smart pointers & RAII** — `unique_ptr`, `shared_ptr`, `weak_ptr`
 - **Templates** — function & class templates, SFINAE, variadic templates
 - **Concepts** (C++20) — `requires`, standard concepts, constrained templates

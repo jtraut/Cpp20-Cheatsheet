@@ -121,6 +121,7 @@
       <li><a href="#classes">Classes &amp; structs</a></li>
       <li><a href="#special-members">Rule of 0/3/5, move</a></li>
       <li><a href="#inheritance">Inheritance &amp; virtual</a></li>
+      <li><a href="#dynamic-memory">Dynamic memory: new vs malloc</a></li>
       <li><a href="#smart-pointers">Smart pointers &amp; RAII</a></li>
     </ul>
     <h2>Generic programming</h2>
@@ -1411,6 +1412,133 @@ auto*  pd = static_cast&lt;Derived*&gt;(pb);    // no runtime check &mdash; UB i
 auto*  pd2 = dynamic_cast&lt;Derived*&gt;(pb);  // returns nullptr (or throws for refs) if wrong
 const auto* cp = const_cast&lt;const Base*&gt;(pb);
 auto  bits = reinterpret_cast&lt;std::uintptr_t&gt;(pb); // last resort; rarely correct</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="dynamic-memory">Dynamic memory: <code>new</code> vs <code>malloc</code> / <code>calloc</code></h2>
+
+  <p>C++ offers two families of dynamic allocation. The C++ family (<code>new</code> / <code>delete</code>) is type-aware and integrates with constructors and exceptions. The C family (<code>malloc</code> / <code>calloc</code> / <code>realloc</code> / <code>free</code>) works in raw bytes with no type knowledge. <strong>Never mix the two</strong> &mdash; memory from <code>malloc</code> must be freed with <code>free</code>; memory from <code>new</code> must be released with <code>delete</code>.</p>
+
+  <h3>Side-by-side comparison</h3>
+
+  <table>
+    <tr><th>Feature</th><th><code>new</code> / <code>delete</code></th><th><code>malloc</code></th><th><code>calloc</code></th></tr>
+    <tr>
+      <td>Initialization</td>
+      <td>Calls constructor (value-initializes for <code>new T{}</code>)</td>
+      <td>None &mdash; memory is indeterminate</td>
+      <td>Zero-initializes every byte</td>
+    </tr>
+    <tr>
+      <td>Return type</td>
+      <td><code>T*</code> &mdash; typed, no cast needed</td>
+      <td><code>void*</code> &mdash; must cast in C++</td>
+      <td><code>void*</code> &mdash; must cast in C++</td>
+    </tr>
+    <tr>
+      <td>Failure behaviour</td>
+      <td>Throws <code>std::bad_alloc</code> (never returns null by default)</td>
+      <td>Returns <code>nullptr</code></td>
+      <td>Returns <code>nullptr</code></td>
+    </tr>
+    <tr>
+      <td>Parameters</td>
+      <td>Type-driven; size computed by compiler</td>
+      <td><code>malloc(bytes)</code> &mdash; total byte count</td>
+      <td><code>calloc(count, size)</code> &mdash; element count &times; element size</td>
+    </tr>
+    <tr>
+      <td>Integer overflow risk</td>
+      <td>None &mdash; compiler computes <code>sizeof(T) * n</code> safely</td>
+      <td>Yes &mdash; <code>malloc(count * sizeof(T))</code> can silently overflow for large <code>count</code></td>
+      <td>None &mdash; implementation checks <code>count &times; size</code> overflow and returns <code>nullptr</code></td>
+    </tr>
+    <tr>
+      <td>Destructor on release</td>
+      <td><code>delete</code> calls destructor, then frees</td>
+      <td><code>free</code> just releases bytes &mdash; no destructor</td>
+      <td><code>free</code> just releases bytes &mdash; no destructor</td>
+    </tr>
+    <tr>
+      <td>Resize</td>
+      <td>Not possible &mdash; use <code>std::vector</code></td>
+      <td><code>realloc</code> (only safe for trivially copyable types)</td>
+      <td><code>realloc</code> (only safe for trivially copyable types)</td>
+    </tr>
+    <tr>
+      <td>Array form</td>
+      <td><code>new T[n]</code> / <code>delete[]</code></td>
+      <td><code>malloc(n * sizeof(T))</code> / <code>free</code></td>
+      <td><code>calloc(n, sizeof(T))</code> / <code>free</code></td>
+    </tr>
+    <tr>
+      <td>Alignment</td>
+      <td>Correct for <code>T</code> automatically</td>
+      <td>Returns suitably aligned for any fundamental type</td>
+      <td>Returns suitably aligned for any fundamental type</td>
+    </tr>
+  </table>
+
+  <h3>Syntax &amp; behaviour</h3>
+  <pre><code class="language-cpp">// ── new / delete ──────────────────────────────────────────
+int* p = new int;          // default-initialized (indeterminate for scalars)
+int* q = new int{42};      // value-initialized to 42
+int* arr = new int[10]{};  // array; {} zero-initializes all elements
+delete p;
+delete[] arr;              // MUST use delete[] for arrays, not delete
+
+// new(nothrow) — returns nullptr instead of throwing
+int* safe = new (std::nothrow) int[1'000'000];
+if (!safe) { /* allocation failed */ }
+
+// ── malloc ────────────────────────────────────────────────
+#include &lt;cstdlib&gt;
+int* m = static_cast&lt;int*&gt;(malloc(sizeof(int)));   // uninitialized
+if (!m) { /* handle failure */ }
+*m = 42;
+free(m);
+
+// Overflow risk — large count * sizeof can wrap to small number
+std::size_t count = SIZE_MAX;
+int* bad = static_cast&lt;int*&gt;(malloc(count * sizeof(int)));  // silent overflow!
+
+// ── calloc ────────────────────────────────────────────────
+int* c = static_cast&lt;int*&gt;(calloc(10, sizeof(int)));  // 10 ints, all zero
+if (!c) { /* handle failure — also returns nullptr on count*size overflow */ }
+free(c);
+
+// ── realloc ───────────────────────────────────────────────
+// Only safe for trivially copyable types (no constructors/destructors)
+int* grown = static_cast&lt;int*&gt;(realloc(c, 20 * sizeof(int)));
+if (!grown) { free(c); /* original c still valid if realloc failed */ }
+// If realloc succeeds, c is invalid — use grown from here on
+
+// ── placement new (advanced) ──────────────────────────────
+// Construct an object in pre-allocated memory (no allocation)
+alignas(MyClass) std::byte buf[sizeof(MyClass)];
+MyClass* obj = new (buf) MyClass{args};  // construct in buf
+obj-&gt;~MyClass();                         // must call destructor manually</code></pre>
+
+  <h3>When to use each</h3>
+
+  <table>
+    <tr><th>Situation</th><th>Preferred tool</th></tr>
+    <tr><td>Owning a single heap object in modern C++</td><td><code>std::make_unique&lt;T&gt;()</code> &mdash; never raw <code>new</code></td></tr>
+    <tr><td>Shared ownership</td><td><code>std::make_shared&lt;T&gt;()</code></td></tr>
+    <tr><td>Growable array on the heap</td><td><code>std::vector&lt;T&gt;</code></td></tr>
+    <tr><td>Fixed-size array, size known at runtime</td><td><code>std::make_unique&lt;T[]&gt;(n)</code></td></tr>
+    <tr><td>C interop / calling a C API that returns malloc'd memory</td><td><code>malloc</code> / <code>free</code> (match what the API expects)</td></tr>
+    <tr><td>Large zero-filled POD buffer, need overflow-safe sizing</td><td><code>calloc</code> (overflow-safe &times; zero-init in one call)</td></tr>
+    <tr><td>Resize a plain-bytes buffer (no constructors)</td><td><code>realloc</code> (trivially copyable types only)</td></tr>
+    <tr><td>Custom allocator / arena / pool</td><td>Placement <code>new</code> into pre-allocated storage</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>Never mix families.</strong> <code>delete</code> on a <code>malloc</code>'d pointer and <code>free</code> on a <code>new</code>'d pointer are both undefined behaviour. Also, <strong>never <code>realloc</code> memory that holds non-trivial C++ objects</strong> &mdash; it byte-copies without calling move constructors, leaving the old location with a dangling object.
+  </div>
+
+  <div class="callout tip">
+    <strong>Modern C++ rule of thumb:</strong> if you are writing <code>new</code> or <code>delete</code> outside of a custom allocator or low-level library, reach for <code>std::make_unique</code> / <code>std::make_shared</code> / <code>std::vector</code> instead. Raw <code>new</code>/<code>delete</code> have no place in application code.
+  </div>
 
   <!-- ================================================================== -->
   <h2 class="section" id="smart-pointers">Smart pointers &amp; RAII (Resource Acquisition Is Initialization)</h2>
