@@ -115,6 +115,7 @@
     <h2>Patterns</h2>
     <ul>
       <li><a href="#patterns">Algorithm patterns</a></li>
+      <li><a href="#bitwise">Bitwise &amp; bit tricks</a></li>
     </ul>
     <h2>OOP &amp; memory</h2>
     <ul>
@@ -1227,6 +1228,127 @@ std::vector&lt;int&gt; mergeKSorted(const std::vector&lt;std::vector&lt;int&gt;&
 
   <div class="callout tip">
     <strong>Heap direction cheat sheet:</strong> <em>top-K largest</em> &rarr; min-heap of size K (pop the smallest intruder). <em>Top-K smallest</em> &rarr; max-heap of size K. <em>Always process next minimum</em> (Dijkstra, merge) &rarr; min-heap (<code>std::greater</code>).
+  </div>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="bitwise">Bitwise operations &amp; bit tricks</h2>
+
+  <p>Bitwise operations work directly on the binary representation of integers. Essential for flags, masks, low-level protocols, and many interview algorithm problems.</p>
+
+  <h3>Operators</h3>
+  <table>
+    <tr><th>Operator</th><th>Name</th><th>Effect</th><th>Example (<code>a=0b1100, b=0b1010</code>)</th></tr>
+    <tr><td><code>a &amp; b</code></td><td>AND</td><td>1 only where both bits are 1</td><td><code>0b1000</code> (8)</td></tr>
+    <tr><td><code>a | b</code></td><td>OR</td><td>1 where either bit is 1</td><td><code>0b1110</code> (14)</td></tr>
+    <tr><td><code>a ^ b</code></td><td>XOR</td><td>1 where bits differ</td><td><code>0b0110</code> (6)</td></tr>
+    <tr><td><code>~a</code></td><td>NOT</td><td>Flip all bits</td><td><code>~0b1100</code> = <code>0b…0011</code></td></tr>
+    <tr><td><code>a &lt;&lt; n</code></td><td>Left shift</td><td>Multiply by 2ⁿ (fills with 0s)</td><td><code>0b1100 &lt;&lt; 1</code> = <code>0b11000</code> (24)</td></tr>
+    <tr><td><code>a &gt;&gt; n</code></td><td>Right shift</td><td>Divide by 2ⁿ; sign-extends for signed types</td><td><code>0b1100 &gt;&gt; 1</code> = <code>0b0110</code> (6)</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>Signed vs unsigned right shift.</strong> For <em>unsigned</em> types, <code>&gt;&gt;</code> is a logical shift (fills with 0). For <em>signed</em> types it is implementation-defined in C++17 and earlier (usually arithmetic / sign-extending), and defined as arithmetic in C++20. Prefer <code>unsigned</code> or <code>uint32_t</code>/<code>uint64_t</code> when bit-twiddling to avoid surprises.
+  </div>
+
+  <h3>Single-bit get / set / clear / toggle</h3>
+  <pre><code class="language-cpp">int n = 0b10110;
+int i = 2;                    // bit position (0 = LSB)
+
+bool isSet = (n &gt;&gt; i) &amp; 1;   // read bit i          → 1
+int  set   = n | (1 &lt;&lt; i);   // set bit i           → 0b10110 (unchanged, already 1)
+int  clear = n &amp; ~(1 &lt;&lt; i);  // clear bit i         → 0b10010
+int  tog   = n ^ (1 &lt;&lt; i);   // toggle bit i        → 0b10010
+
+// For 64-bit values use 1LL to avoid shifting a 32-bit 1 too far
+bool isSet64 = (n &gt;&gt; i) &amp; 1LL;</code></pre>
+
+  <h3>Brian Kernighan's trick — <code>n &amp; (n - 1)</code></h3>
+  <p>Clears the lowest set bit of <code>n</code> in one operation. Useful for counting set bits and checking powers of two.</p>
+  <pre><code class="language-cpp">// Count set bits (Hamming weight) — O(set bits), not O(bit width)
+int countBits(int n) {
+    int count = 0;
+    while (n) { n &amp;= (n - 1); ++count; }   // each iteration drops one set bit
+    return count;
+}
+
+// Check if n is a power of two (exactly one bit set)
+bool isPowerOfTwo(int n) {
+    return n &gt; 0 &amp;&amp; (n &amp; (n - 1)) == 0;
+}
+
+// Check if n is a power of two, or zero (bit cleared → 0 means ≤1 set bit)
+bool atMostOneBit(unsigned n) { return (n &amp; (n - 1)) == 0; }</code></pre>
+
+  <h3>Other common bit tricks</h3>
+  <pre><code class="language-cpp">// Isolate the lowest set bit  (e.g. 0b10110 → 0b00010)
+int lowest = n &amp; (-n);         // -n == ~n + 1  (two's complement negation)
+
+// Clear the lowest set bit    (Brian Kernighan, inline)
+n &amp;= (n - 1);
+
+// XOR swap (no temp variable — avoid in practice; compilers do it better)
+a ^= b; b ^= a; a ^= b;
+
+// Find the single non-duplicate in an array where everything else appears twice
+int findUnique(const std::vector&lt;int&gt;&amp; v) {
+    int x = 0;
+    for (int n : v) x ^= n;   // pairs cancel out; unique survives
+    return x;
+}
+
+// Check if two integers have opposite signs
+bool oppositeSigns(int a, int b) { return (a ^ b) &lt; 0; }
+
+// Round up to next power of two (32-bit)
+uint32_t nextPow2(uint32_t n) {
+    --n;
+    n |= n &gt;&gt; 1; n |= n &gt;&gt; 2; n |= n &gt;&gt; 4;
+    n |= n &gt;&gt; 8; n |= n &gt;&gt; 16;
+    return ++n;
+}</code></pre>
+
+  <h3>Counting bits — <code>__builtin_popcount</code> and <code>std::popcount</code></h3>
+  <p><code>__builtin_*</code> are GCC/Clang compiler intrinsics that map to a single CPU instruction where available. C++20 standardises the same operations in <code>&lt;bit&gt;</code>, which is portable and preferred in modern code.</p>
+  <pre><code class="language-cpp">#include &lt;bit&gt;       // C++20
+
+// Hamming weight — number of set (1) bits
+int a = 0b10110110;
+int gcc_way  = __builtin_popcount(a);   // GCC/Clang; undefined for negative signed
+int cpp20    = std::popcount((unsigned)a);  // C++20; requires unsigned type → 5
+
+// __builtin_popcountll for 64-bit
+long long b = 0xDEADBEEF'CAFEBABE;
+int bits64  = __builtin_popcountll(b);
+int bits64c = std::popcount((uint64_t)b);  // C++20 equivalent
+
+// Count leading zeros (position of highest set bit)
+int clz  = __builtin_clz(a);           // GCC/Clang — UB if a == 0
+int clzc = std::countl_zero((unsigned)a); // C++20 — well-defined, returns width if 0
+
+// Count trailing zeros (position of lowest set bit)
+int ctz  = __builtin_ctz(a);           // GCC/Clang — UB if a == 0
+int ctzc = std::countr_zero((unsigned)a); // C++20 — well-defined, returns width if 0
+
+// Floor log2 via leading-zero count (= index of highest set bit)
+int floorLog2 = 31 - __builtin_clz(a);            // GCC/Clang
+int floorLog2c = std::bit_width((unsigned)a) - 1; // C++20: bit_width(x) = floor(log2(x))+1
+
+// Check if unsigned value is a power of two (C++20)
+bool pow2 = std::has_single_bit((unsigned)a);      // true iff exactly 1 bit set</code></pre>
+
+  <table>
+    <tr><th>GCC/Clang intrinsic</th><th>C++20 (<code>&lt;bit&gt;</code>) equivalent</th><th>What it computes</th></tr>
+    <tr><td><code>__builtin_popcount(n)</code></td><td><code>std::popcount((unsigned)n)</code></td><td>Number of 1-bits (Hamming weight)</td></tr>
+    <tr><td><code>__builtin_clz(n)</code></td><td><code>std::countl_zero((unsigned)n)</code></td><td>Leading zeros (UB/0 if n == 0 for intrinsic)</td></tr>
+    <tr><td><code>__builtin_ctz(n)</code></td><td><code>std::countr_zero((unsigned)n)</code></td><td>Trailing zeros (UB/width if n == 0 for intrinsic)</td></tr>
+    <tr><td><code>__builtin_clrsb(n)</code></td><td><code>std::countl_one / countl_zero</code></td><td>Redundant sign bits</td></tr>
+    <tr><td>&mdash;</td><td><code>std::bit_width(n)</code></td><td>Minimum bits to represent n (= ⌊log₂n⌋ + 1)</td></tr>
+    <tr><td>&mdash;</td><td><code>std::has_single_bit(n)</code></td><td>True iff n is a power of two</td></tr>
+    <tr><td>&mdash;</td><td><code>std::rotl(n, k)</code> / <code>std::rotr(n, k)</code></td><td>Rotate bits left / right</td></tr>
+  </table>
+
+  <div class="callout tip">
+    <strong>Prefer <code>&lt;bit&gt;</code> in C++20+.</strong> The <code>__builtin_*</code> intrinsics are undefined behaviour when given 0, and undefined on MSVC. The <code>std::</code> equivalents are well-specified, portable, and compile to the same single instruction on any modern target.
   </div>
 
   <!-- ================================================================== -->
