@@ -565,6 +565,35 @@ auto d = std::format("{}{}", a, b);
 // Iterate
 for (char ch : s) { /* ... */ }</code></pre>
 
+  <h4>All substrings of a string</h4>
+  <pre><code class="language-cpp">std::string s = "abc";
+
+// Every substring — outer loop picks start, inner picks length
+// substr(pos, len): pos = starting index, len = number of characters
+for (std::size_t i = 0; i &lt; s.size(); ++i) {
+    for (std::size_t len = 1; len &lt;= s.size() - i; ++len) {
+        std::cout &lt;&lt; s.substr(i, len) &lt;&lt; '\n';
+        // i=0,len=1 → "a"
+        // i=0,len=2 → "ab"
+        // i=0,len=3 → "abc"
+        // i=1,len=1 → "b"
+        // i=1,len=2 → "bc"
+        // i=2,len=1 → "c"
+    }
+}
+
+// Collect into a vector
+std::vector&lt;std::string&gt; subs;
+for (std::size_t i = 0; i &lt; s.size(); ++i)
+    for (std::size_t len = 1; len &lt;= s.size() - i; ++len)
+        subs.push_back(s.substr(i, len));
+
+// Zero-copy version using string_view (avoids allocating each substring)
+std::vector&lt;std::string_view&gt; views;
+for (std::size_t i = 0; i &lt; s.size(); ++i)
+    for (std::size_t len = 1; len &lt;= s.size() - i; ++len)
+        views.emplace_back(s.data() + i, len);  // s must outlive views</code></pre>
+
   <h4>I/O quick reference</h4>
   <pre><code class="language-cpp">#include &lt;iostream&gt;
 #include &lt;fstream&gt;
