@@ -14,6 +14,7 @@ A single-file HTML reference guide for modern C++ (C++20), covering everything f
 - **Functions & lambdas** — overloading, default args, captures, `std::function`
 - **Errors & exceptions** — `try`/`catch`, `noexcept`, `std::expected`
 - **Strings & formatting** — `std::string`, `string_view`, `std::format` (C++20)
+- **Regular expressions** — `std::regex_match`, `regex_search`, `regex_replace`, capture groups, iterating all matches, flags, common patterns
 - **Arrays & `std::array`**
 - **STL containers** — `vector`, `map`, `unordered_map`, `set`, `deque`, `list`
 - **Utilities** — `pair`, `tuple`, `optional`, `variant`

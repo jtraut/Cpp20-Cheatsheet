@@ -105,6 +105,7 @@
     <h2>Data</h2>
     <ul>
       <li><a href="#strings">Strings &amp; formatting</a></li>
+      <li><a href="#regex">Regular expressions</a></li>
       <li><a href="#arrays">Arrays &amp; std::array</a></li>
       <li><a href="#containers">STL containers</a></li>
       <li><a href="#utilities">pair / tuple / optional / variant</a></li>
@@ -587,6 +588,122 @@ std::string built = oss.str();
 // Fast unsynced cout (don't mix with printf afterward)
 std::ios_base::sync_with_stdio(false);
 std::cin.tie(nullptr);</code></pre>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="regex">Regular expressions (<code>&lt;regex&gt;</code>)</h2>
+
+  <p><code>std::regex</code> implements ECMAScript-flavoured regular expressions (the default grammar). Compiling a pattern is expensive — declare <code>std::regex</code> objects <code>static</code> or at an outer scope and reuse them.</p>
+
+  <h3>Syntax quick reference</h3>
+  <table>
+    <tr><th>Pattern</th><th>Matches</th></tr>
+    <tr><td><code>.</code></td><td>Any character except newline</td></tr>
+    <tr><td><code>\d</code> / <code>\D</code></td><td>Digit [0-9] / non-digit</td></tr>
+    <tr><td><code>\w</code> / <code>\W</code></td><td>Word char [a-zA-Z0-9_] / non-word</td></tr>
+    <tr><td><code>\s</code> / <code>\S</code></td><td>Whitespace / non-whitespace</td></tr>
+    <tr><td><code>^</code> / <code>$</code></td><td>Start / end of string (or line with <code>multiline</code>)</td></tr>
+    <tr><td><code>*</code> / <code>+</code> / <code>?</code></td><td>0+, 1+, 0 or 1 occurrences (greedy)</td></tr>
+    <tr><td><code>*?</code> / <code>+?</code></td><td>Lazy (non-greedy) versions</td></tr>
+    <tr><td><code>{n}</code> / <code>{n,m}</code></td><td>Exactly n / between n and m occurrences</td></tr>
+    <tr><td><code>[abc]</code> / <code>[^abc]</code></td><td>Character class / negated class</td></tr>
+    <tr><td><code>(abc)</code></td><td>Capture group</td></tr>
+    <tr><td><code>(?:abc)</code></td><td>Non-capturing group</td></tr>
+    <tr><td><code>a|b</code></td><td>Alternation — a or b</td></tr>
+    <tr><td><code>\b</code></td><td>Word boundary</td></tr>
+  </table>
+
+  <h3>The three main functions</h3>
+  <pre><code class="language-cpp">#include &lt;regex&gt;
+#include &lt;string&gt;
+
+std::string s = "Order #1042 placed on 2024-05-10";
+std::regex  date_re(R"(\d{4}-\d{2}-\d{2})");   // raw string avoids double-escaping
+
+// ── regex_match ───────────────────────────────────────────
+// Returns true only if the ENTIRE string matches the pattern.
+std::regex word_re(R"(\w+)");
+bool whole = std::regex_match("hello", word_re);   // true
+bool part  = std::regex_match(s, date_re);          // false (more than just a date)
+
+// ── regex_search ──────────────────────────────────────────
+// Returns true if the pattern appears ANYWHERE in the string.
+std::smatch m;
+if (std::regex_search(s, m, date_re)) {
+    std::cout &lt;&lt; "Found: " &lt;&lt; m[0] &lt;&lt; '\n';    // "2024-05-10"
+    std::cout &lt;&lt; "Prefix: " &lt;&lt; m.prefix() &lt;&lt; '\n'; // text before the match
+    std::cout &lt;&lt; "Suffix: " &lt;&lt; m.suffix() &lt;&lt; '\n'; // text after the match
+}
+
+// ── regex_replace ─────────────────────────────────────────
+// Replace every match; $0 = whole match, $1 = first group, etc.
+std::regex num_re(R"(\d+)");
+std::string result = std::regex_replace(s, num_re, "[NUM]");
+// "Order #[NUM] placed on [NUM]-[NUM]-[NUM]"</code></pre>
+
+  <h3>Capture groups</h3>
+  <pre><code class="language-cpp">// Groups are accessed via m[1], m[2], … (m[0] is always the full match)
+std::regex log_re(R"((\d{4}-\d{2}-\d{2}) (\w+): (.+))");
+std::string log = "2024-05-10 ERROR: disk full";
+std::smatch gm;
+if (std::regex_search(log, gm, log_re)) {
+    std::cout &lt;&lt; "Date:    " &lt;&lt; gm[1] &lt;&lt; '\n';  // "2024-05-10"
+    std::cout &lt;&lt; "Level:   " &lt;&lt; gm[2] &lt;&lt; '\n';  // "ERROR"
+    std::cout &lt;&lt; "Message: " &lt;&lt; gm[3] &lt;&lt; '\n';  // "disk full"
+}</code></pre>
+
+  <h3>Iterating over all matches</h3>
+  <pre><code class="language-cpp">std::string text = "foo 123 bar 456 baz 789";
+std::regex  nums(R"(\d+)");
+
+// sregex_iterator walks every non-overlapping match
+for (auto it  = std::sregex_iterator(text.begin(), text.end(), nums),
+          end = std::sregex_iterator{};
+     it != end; ++it) {
+    std::cout &lt;&lt; (*it)[0] &lt;&lt; '\n';   // 123, 456, 789
+}
+
+// Collect all matches into a vector
+std::vector&lt;std::string&gt; matches;
+std::transform(
+    std::sregex_iterator(text.begin(), text.end(), nums),
+    std::sregex_iterator{},
+    std::back_inserter(matches),
+    [](const std::smatch&amp; m){ return m[0].str(); }
+);</code></pre>
+
+  <h3>Flags</h3>
+  <pre><code class="language-cpp">// Flags are combined with |
+std::regex re("hello", std::regex::icase);              // case-insensitive
+std::regex ml("^line", std::regex::multiline);          // ^ matches after each \n
+std::regex both("^hello", std::regex::icase | std::regex::multiline);
+
+// Other useful flags
+// std::regex::ECMAScript  (default)
+// std::regex::basic       — POSIX BRE grammar
+// std::regex::extended    — POSIX ERE grammar
+// std::regex::nosubs      — disable capture groups (faster if you don't need them)
+// std::regex::optimize    — hint to spend more time compiling for faster matching</code></pre>
+
+  <h3>Common patterns</h3>
+  <table>
+    <tr><th>Purpose</th><th>Pattern (raw string)</th></tr>
+    <tr><td>Integer (optional sign)</td><td><code>R"([+-]?\d+)"</code></td></tr>
+    <tr><td>Decimal number</td><td><code>R"([+-]?\d+(\.\d+)?)"</code></td></tr>
+    <tr><td>ISO date (YYYY-MM-DD)</td><td><code>R"(\d{4}-\d{2}-\d{2})"</code></td></tr>
+    <tr><td>Email (simplified)</td><td><code>R"([\w.+-]+@[\w-]+\.[a-zA-Z]{2,})"</code></td></tr>
+    <tr><td>IPv4 address</td><td><code>R"((\d{1,3}\.){3}\d{1,3})"</code></td></tr>
+    <tr><td>C++ identifier</td><td><code>R"([a-zA-Z_]\w*)"</code></td></tr>
+    <tr><td>Hex colour</td><td><code>R"(#[0-9a-fA-F]{6})"</code></td></tr>
+    <tr><td>Whitespace-only line</td><td><code>R"(^\s*$)"</code></td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>Performance.</strong> Constructing a <code>std::regex</code> compiles the pattern and can be hundreds of microseconds. Declare patterns <code>static const std::regex re(...)</code> inside a function or as a namespace-scope constant so they are compiled once.
+  </div>
+
+  <div class="callout tip">
+    <strong>Use raw string literals</strong> (<code>R"(...)"</code>) for patterns — backslashes don't need doubling, so <code>R"(\d+)"</code> is cleaner and less error-prone than <code>"\\d+"</code>.
+  </div>
 
   <!-- ================================================================== -->
   <h2 class="section" id="arrays">Arrays &amp; std::array</h2>
