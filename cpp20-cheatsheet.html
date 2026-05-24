@@ -406,6 +406,31 @@ for (std::size_t i = 0; i &lt; v.size(); ++i) { /* ... */ }
 import std;  // or: #include &lt;ranges&gt;
 for (int x : v | std::views::reverse) { /* ... */ }</code></pre>
 
+  <h4>Inline if &mdash; the ternary operator <code>? :</code></h4>
+  <p>An <strong>inline if</strong> (ternary / conditional operator) evaluates to one of two values in a single expression: <code>condition ? value_if_true : value_if_false</code>. Use it for simple value selection; prefer a regular <code>if</code>/<code>else</code> for anything with side effects or multiple statements.</p>
+  <pre><code class="language-cpp">int x = 10;
+
+// Inline if — basic form
+int abs_x = (x &lt; 0) ? -x : x;          // -10 if negative, 10 otherwise
+
+// Assign to a variable
+std::string label = (x % 2 == 0) ? "even" : "odd";
+
+// Inline in a function call argument
+std::cout &lt;&lt; "Value: " &lt;&lt; (x &gt; 0 ? "positive" : "non-positive") &lt;&lt; '\n';
+
+// Return directly from a function
+int clamp(int v, int lo, int hi) {
+    return (v &lt; lo) ? lo : (v &gt; hi) ? hi : v;  // nested ternary — keep shallow
+}
+
+// const / constexpr — ternary works at compile time
+constexpr int limit = (sizeof(void*) == 8) ? 1024 : 512;  // 64 vs 32-bit</code></pre>
+
+  <div class="callout warn">
+    <strong>Nested ternaries</strong> compile but hurt readability fast — more than one level deep, switch to <code>if</code>/<code>else if</code>. Also note: both branches must be of compatible types; mismatched types cause an implicit conversion that can surprise you (e.g. <code>true ? 0 : 0.5</code> yields <code>double</code>).
+  </div>
+
   <!-- ================================================================== -->
   <h2 class="section" id="functions">Functions &amp; lambdas</h2>
 
