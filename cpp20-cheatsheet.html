@@ -194,6 +194,77 @@
     <li><strong>Templates are compile-time code generation.</strong> The compiler stamps out a new function/class for each set of template arguments. Concepts (C++20) put constraints on those arguments.</li>
   </ol>
 
+  <h3>Stack vs heap</h3>
+
+  <h4>The stack — fast and automatic</h4>
+  <p>The stack is managed directly by the CPU and used for <strong>automatic duration storage</strong> — memory whose lifetime is tied to the current function call.</p>
+  <ul>
+    <li><strong>Automatic cleanup.</strong> Variables are pushed onto the stack when a function is entered and popped off when it returns. You never manually free this memory — the compiler generates all the bookkeeping.</li>
+    <li><strong>Efficiency.</strong> Allocation is just a single pointer move (the stack pointer register). The data is contiguous and recently accessed, so it is almost always in CPU cache — stack access is as fast as memory access gets.</li>
+    <li><strong>Main risk.</strong> The stack is small (typically 1–8 MB). Large local arrays or deep recursion can exhaust it, causing a <strong>stack overflow</strong> — a hard crash with no recovery.</li>
+  </ul>
+
+  <h4>The heap — large and dynamic</h4>
+  <p>The heap (also called the <em>free store</em> in C++ terminology) is used for <strong>dynamic duration storage</strong> — memory whose lifetime you control explicitly.</p>
+  <ul>
+    <li><strong>Manual control.</strong> In C++ you use <code>new</code> to allocate and <code>delete</code> to free (or let smart pointers and containers do it for you via RAII).</li>
+    <li><strong>Global access.</strong> Unlike stack variables, heap data does not disappear when the function that created it returns. A pointer to heap memory can be passed freely across functions, threads, and module boundaries.</li>
+    <li><strong>Fragmentation.</strong> Frequent mixed-size allocations and frees can leave gaps in the memory pool. Over a long-running program this can increase allocation latency and waste virtual memory.</li>
+    <li><strong>Main risk.</strong> Forgetting <code>delete</code> causes a <strong>memory leak</strong> — the memory is never returned to the OS. Modern C++ addresses this with <code>std::unique_ptr</code> and <code>std::shared_ptr</code>, which call <code>delete</code> automatically in their destructors.</li>
+  </ul>
+
+  <table>
+    <tr><th>Feature</th><th>Stack</th><th>Heap</th></tr>
+    <tr>
+      <td><strong>Management</strong></td>
+      <td>Automatic — allocated on entry to a scope, freed on exit. No programmer action required.</td>
+      <td>Manual (<code>new</code>/<code>delete</code>, <code>malloc</code>/<code>free</code>) or RAII wrappers (<code>unique_ptr</code>, <code>vector</code>). Programmer controls lifetime.</td>
+    </tr>
+    <tr>
+      <td><strong>Speed</strong></td>
+      <td>Extremely fast — just a single pointer decrement to allocate. Cache-friendly due to contiguous, predictable layout.</td>
+      <td>Slower — allocator must find a free block, may acquire locks, and can fragment over time. Pointer indirection hurts cache locality.</td>
+    </tr>
+    <tr>
+      <td><strong>Size</strong></td>
+      <td>Small and fixed — typically 1–8 MB per thread (OS-dependent). Stack overflow if exceeded.</td>
+      <td>Large — limited only by available virtual memory (GBs on 64-bit systems). Practical limit set by physical RAM + swap.</td>
+    </tr>
+    <tr>
+      <td><strong>Lifetime</strong></td>
+      <td>Tied to the enclosing scope. Destroyed when the function returns or the block exits — cannot outlive its frame.</td>
+      <td>Controlled by the programmer. Persists until explicitly freed. Can safely outlive the function that created it.</td>
+    </tr>
+    <tr>
+      <td><strong>Structure</strong></td>
+      <td>LIFO (Last In, First Out) — grows and shrinks like a call-stack. No fragmentation; always contiguous.</td>
+      <td>Unstructured free store — allocator manages a pool of blocks. Can fragment over time if many differently-sized objects are allocated and freed.</td>
+    </tr>
+    <tr>
+      <td><strong>Data types</strong></td>
+      <td>Local variables, function parameters, return values, and fixed-size arrays whose size is known at compile time.</td>
+      <td>Objects whose size is only known at runtime, large buffers, objects that must outlive their creating scope, and polymorphic objects owned via pointer.</td>
+    </tr>
+    <tr>
+      <td><strong>Failure mode</strong></td>
+      <td>Stack overflow — typically a hard crash with no recovery. Triggered by deep recursion or large local arrays.</td>
+      <td><code>std::bad_alloc</code> exception (or <code>nullptr</code> from <code>malloc</code>) — can be caught and handled.</td>
+    </tr>
+    <tr>
+      <td><strong>C++ examples</strong></td>
+      <td><code>int x = 5;</code> &nbsp; <code>std::array&lt;int,4&gt; a;</code> &nbsp; <code>MyStruct s;</code></td>
+      <td><code>new int</code> &nbsp; <code>std::make_unique&lt;T&gt;()</code> &nbsp; <code>std::vector&lt;int&gt;</code> (buffer is heap-allocated)</td>
+    </tr>
+  </table>
+
+  <h4>Summary recommendation</h4>
+  <div class="callout tip">
+    <strong>Use the stack</strong> for small, local variables that only need to exist while a specific function is running — plain integers, small structs, fixed-size arrays known at compile time (<code>std::array</code>). Prefer the stack by default: it is faster, safer, and self-cleaning.
+  </div>
+  <div class="callout tip">
+    <strong>Use the heap</strong> for very large data (images, large buffers), data whose size is not known at compile time, or objects that must stay alive after the creating function returns. In modern C++, reach for <code>std::vector</code>, <code>std::make_unique</code>, or <code>std::make_shared</code> rather than raw <code>new</code> — you get heap storage with automatic cleanup.
+  </div>
+
   <h2 class="section" id="build">Compile &amp; build</h2>
   <pre><code class="language-cpp">// Single file, manual compile
 g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic main.cpp -o app
