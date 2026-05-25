@@ -1834,6 +1834,102 @@ obj-&gt;~MyClass();                         // must call destructor manually</co
     <strong>Modern C++ rule of thumb:</strong> if you are writing <code>new</code> or <code>delete</code> outside of a custom allocator or low-level library, reach for <code>std::make_unique</code> / <code>std::make_shared</code> / <code>std::vector</code> instead. Raw <code>new</code>/<code>delete</code> have no place in application code.
   </div>
 
+  <h3><code>memcpy</code> and <code>std::bit_cast</code> — safe byte-level reinterpretation</h3>
+
+  <p>Both tools let you read the raw bytes of one object as a different type without triggering undefined behaviour from strict aliasing. <code>memcpy</code> is the C-compatible runtime approach; <code>std::bit_cast</code> (C++20) is the modern, <code>constexpr</code>-capable replacement.</p>
+
+  <h4><code>std::memcpy</code></h4>
+  <p>Copies <code>count</code> bytes from <code>src</code> to <code>dst</code>. Both objects must be <strong>trivially copyable</strong>; the regions must not overlap (use <code>std::memmove</code> if they might).</p>
+  <pre><code class="language-cpp">#include &lt;cstring&gt;   // memcpy, memmove, memset, memcmp
+#include &lt;cstdint&gt;
+
+// ── Basic copy ─────────────────────────────────────────────
+int src = 42, dst = 0;
+std::memcpy(&amp;dst, &amp;src, sizeof(int));   // dst == 42
+
+// ── Copy a struct into a byte buffer (serialisation) ───────
+struct Packet { uint16_t id; uint32_t payload; };  // trivially copyable
+Packet pkt{.id = 7, .payload = 0xDEADBEEF};
+
+std::byte buf[sizeof(Packet)];
+std::memcpy(buf, &amp;pkt, sizeof(pkt));   // pkt → raw bytes
+
+Packet out{};
+std::memcpy(&amp;out, buf, sizeof(Packet)); // raw bytes → pkt again
+
+// ── Type-punning: inspect the bits of a float ─────────────
+// The ONLY defined way to do this before C++20 bit_cast.
+float  f = 3.14f;
+uint32_t bits = 0;
+std::memcpy(&amp;bits, &amp;f, sizeof(float));
+// bits now holds the IEEE 754 representation of 3.14f
+
+// ── memmove: use when src and dst may overlap ──────────────
+char arr[] = "abcdef";
+std::memmove(arr + 1, arr, 4);   // shifts "abcd" right by one — safe overlap
+
+// ── memset: fill bytes with a value ───────────────────────
+int data[8];
+std::memset(data, 0, sizeof(data));    // zero-fill (fine for ints)
+// Warning: memset(data, 1, ...) does NOT set each int to 1 —
+// it sets every byte to 0x01, giving each int the value 0x01010101
+
+// ── memcmp: byte-level equality ───────────────────────────
+bool same = (std::memcmp(&amp;pkt, &amp;out, sizeof(Packet)) == 0);</code></pre>
+
+  <div class="callout warn">
+    <strong><code>memcpy</code> is only safe for trivially copyable types.</strong> Using it on objects with vtables, non-trivial constructors, or internal pointers (e.g. <code>std::string</code>, <code>std::vector</code>) produces undefined behaviour — it byte-copies the internals without updating ownership or virtual dispatch tables.
+  </div>
+
+  <h4><code>std::bit_cast</code> (C++20)</h4>
+  <p>Reinterprets the bits of <code>from</code> as type <code>To</code> — same effect as the <code>memcpy</code> type-pun trick but <code>constexpr</code>, safer (enforced at compile time), and expresses intent clearly. Requires <code>sizeof(To) == sizeof(From)</code> and both types trivially copyable; violations are compile errors.</p>
+  <pre><code class="language-cpp">#include &lt;bit&gt;      // std::bit_cast  (C++20)
+#include &lt;cstdint&gt;
+
+// ── Float ↔ uint32 ────────────────────────────────────────
+float    f    = 1.0f;
+uint32_t bits = std::bit_cast&lt;uint32_t&gt;(f);
+// bits == 0x3F800000  (IEEE 754 representation of 1.0f)
+
+float back = std::bit_cast&lt;float&gt;(bits);  // round-trips exactly
+
+// ── Double ↔ uint64 ───────────────────────────────────────
+double   d     = -0.0;
+uint64_t dbits = std::bit_cast&lt;uint64_t&gt;(d);
+// dbits == 0x8000000000000000  (sign bit set, exponent+mantissa zero)
+
+// ── Check the sign bit of a float without branching ───────
+bool is_negative = (std::bit_cast&lt;uint32_t&gt;(f) &gt;&gt; 31) != 0;
+
+// ── Reconstruct a float from its raw IEEE 754 parts ───────
+// exponent=127 (bias), mantissa=0 → 1.0f
+uint32_t raw = (127u &lt;&lt; 23);
+float one    = std::bit_cast&lt;float&gt;(raw);   // 1.0f
+
+// ── constexpr context — memcpy cannot do this ─────────────
+constexpr uint32_t kPiBits = std::bit_cast&lt;uint32_t&gt;(3.14159265f);
+// evaluated entirely at compile time; usable in static_assert etc.
+static_assert(kPiBits == 0x40490FDB);
+
+// ── Struct ↔ array of bytes ───────────────────────────────
+struct Vec2 { float x, y; };              // 8 bytes, trivially copyable
+using Bytes8 = std::array&lt;std::byte, 8&gt;;
+
+Vec2   v{1.0f, 2.0f};
+Bytes8 raw_bytes = std::bit_cast&lt;Bytes8&gt;(v);   // struct → bytes
+Vec2   v2        = std::bit_cast&lt;Vec2&gt;(raw_bytes); // bytes → struct</code></pre>
+
+  <h4>Choosing between them</h4>
+  <table>
+    <tr><th></th><th><code>std::memcpy</code></th><th><code>std::bit_cast</code> (C++20)</th></tr>
+    <tr><td>Standard</td><td>C / all C++</td><td>C++20</td></tr>
+    <tr><td><code>constexpr</code></td><td>No</td><td>Yes</td></tr>
+    <tr><td>Size mismatch</td><td>Silent (copies what you say)</td><td>Compile error</td></tr>
+    <tr><td>Non-trivial type</td><td>UB (silently)</td><td>Compile error</td></tr>
+    <tr><td>Overlapping buffers</td><td>UB — use <code>memmove</code></td><td>N/A (value semantics)</td></tr>
+    <tr><td>Best for</td><td>Serialisation, C interop, pre-C++20 type-punning</td><td>Type-punning, bit inspection, compile-time byte manipulation</td></tr>
+  </table>
+
   <!-- ================================================================== -->
   <h2 class="section" id="smart-pointers">Smart pointers &amp; RAII (Resource Acquisition Is Initialization)</h2>
 
