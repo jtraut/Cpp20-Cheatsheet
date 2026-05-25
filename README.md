@@ -40,6 +40,7 @@ A single-file HTML reference guide for modern C++ (C++20), covering everything f
 - **async / future / promise** — `std::async`, `std::future`
 - **Idioms cheat sheet** — RAII, copy-and-swap, NVI, type erasure
 - **Pitfalls, UB & surprises** — common undefined behavior and gotchas
+- **Interview: reimplement the stdlib** — `std::vector<T>` from scratch: data layout, growth policy (1.5× vs 2×), `noexcept` move constructor, `std::move_if_noexcept`, allocator awareness, RAII destructor, exception safety, iterator invalidation rules
 - **Interview Q&A flash cards** — curated questions with concise answers
 
 ## Usage

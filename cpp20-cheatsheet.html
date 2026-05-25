@@ -149,6 +149,7 @@
     <ul>
       <li><a href="#idioms">Idioms cheatsheet</a></li>
       <li><a href="#pitfalls">Pitfalls &amp; UB</a></li>
+      <li><a href="#impl-walkthroughs">Reimplement the stdlib</a></li>
       <li><a href="#interview">Interview Q&amp;A</a></li>
     </ul>
   </nav>
@@ -2305,6 +2306,203 @@ pf.get();</code></pre>
     <li><strong>Data races on a single non-atomic.</strong> Even if you "think" the value is safely racing. Compiler may reorder reads/writes; the result is UB.</li>
     <li><strong>Self-move.</strong> <code>x = std::move(x);</code> is technically allowed (target left in valid-but-unspecified state) but almost always a bug.</li>
   </ul>
+
+  <!-- ================================================================== -->
+  <h2 class="section" id="impl-walkthroughs">Interview: reimplement the stdlib</h2>
+
+  <p>A common interview question is "walk me through how you'd implement X". The goal is not a production-ready class but a demonstration that you understand ownership, growth policy, exception safety, and iterator contracts. The annotations below are the talking points interviewers listen for.</p>
+
+  <h3>Reimplement <code>std::vector&lt;T&gt;</code></h3>
+
+  <h4>Data representation</h4>
+  <p>Two common layouts — both equivalent in practice:</p>
+  <pre><code class="language-cpp">// Option A: pointer + two sizes  (easier to reason about)
+T*      data_;
+size_t  size_;   // elements constructed
+size_t  cap_;    // elements allocated
+
+// Option B: three pointers  (what libc++ / libstdc++ actually use internally)
+T* begin_;       // first element
+T* end_;         // one-past-last constructed element
+T* end_cap_;     // one-past-last allocated byte</code></pre>
+
+  <h4>Growth policy</h4>
+  <p>When capacity is exhausted, reallocate with a multiplier. The two common choices:</p>
+  <table>
+    <tr><th>Factor</th><th>Trade-off</th></tr>
+    <tr><td><strong>2×</strong></td><td>Simpler to reason about; amortised O(1) push_back guaranteed. wastes up to 50 % of allocated memory in the worst case.</td></tr>
+    <tr><td><strong>1.5×</strong></td><td>Better memory utilisation; old blocks can be reused by the allocator after a few reallocations (the "golden ratio" argument). Slightly more reallocations over a sequence of pushes.</td></tr>
+  </table>
+  <p class="muted">Say either aloud — the answer the interviewer wants is that you <em>know there is a choice</em> and can explain the memory vs. allocation-count trade-off.</p>
+
+  <h4>Full skeleton</h4>
+  <pre><code class="language-cpp">#include &lt;memory&gt;       // std::allocator_traits
+#include &lt;utility&gt;      // std::move, std::forward, std::move_if_noexcept
+#include &lt;stdexcept&gt;    // std::out_of_range
+#include &lt;algorithm&gt;    // std::max
+
+template &lt;typename T, typename Alloc = std::allocator&lt;T&gt;&gt;
+class Vec {
+    using AllocTraits = std::allocator_traits&lt;Alloc&gt;;
+
+    T*     data_  = nullptr;
+    size_t size_  = 0;
+    size_t cap_   = 0;
+    Alloc  alloc_;
+
+public:
+    // ── Constructors ───────────────────────────────────────
+    Vec() = default;
+
+    explicit Vec(size_t n, const T&amp; val = T{}, Alloc a = {})
+        : alloc_(std::move(a))
+    {
+        reallocate(n);
+        for (size_t i = 0; i &lt; n; ++i)
+            AllocTraits::construct(alloc_, data_ + i, val);
+        size_ = n;
+    }
+
+    // ── Copy constructor — O(n) ────────────────────────────
+    Vec(const Vec&amp; o) : alloc_(AllocTraits::select_on_container_copy_construction(o.alloc_)) {
+        reallocate(o.size_);
+        for (size_t i = 0; i &lt; o.size_; ++i)
+            AllocTraits::construct(alloc_, data_ + i, o.data_[i]);
+        size_ = o.size_;
+    }
+
+    // ── Move constructor — O(1), must be noexcept ──────────
+    // noexcept is critical: std::vector uses std::move_if_noexcept
+    // during its own reallocations. If your move ctor can throw,
+    // the outer vector falls back to copying, negating all the benefit.
+    Vec(Vec&amp;&amp; o) noexcept
+        : data_(o.data_), size_(o.size_), cap_(o.cap_), alloc_(std::move(o.alloc_))
+    {
+        o.data_ = nullptr;
+        o.size_ = o.cap_ = 0;
+    }
+
+    // ── Destructor — RAII ──────────────────────────────────
+    // Destroy elements in reverse (mirrors construction order),
+    // then release the raw storage.
+    ~Vec() {
+        clear();
+        if (data_) AllocTraits::deallocate(alloc_, data_, cap_);
+    }
+
+    // ── Copy / move assignment (copy-and-swap) ─────────────
+    Vec&amp; operator=(Vec o) noexcept {  // o is already a copy or move
+        swap(*this, o);
+        return *this;
+    }
+
+    friend void swap(Vec&amp; a, Vec&amp; b) noexcept {
+        using std::swap;
+        swap(a.data_,  b.data_);
+        swap(a.size_,  b.size_);
+        swap(a.cap_,   b.cap_);
+        swap(a.alloc_, b.alloc_);
+    }
+
+    // ── Element access ─────────────────────────────────────
+    T&amp;       operator[](size_t i)       { return data_[i]; }
+    const T&amp; operator[](size_t i) const { return data_[i]; }
+
+    T&amp; at(size_t i) {
+        if (i &gt;= size_) throw std::out_of_range("Vec::at");
+        return data_[i];
+    }
+
+    T&amp;       front()       { return data_[0]; }
+    T&amp;       back()        { return data_[size_ - 1]; }
+    size_t   size()  const { return size_; }
+    size_t   capacity() const { return cap_; }
+    bool     empty() const { return size_ == 0; }
+
+    // ── Raw-pointer iterators ──────────────────────────────
+    // Iterator stability invariant:
+    //   • reallocation (push_back past capacity, reserve, resize)
+    //     invalidates ALL iterators, pointers, and references.
+    //   • pop_back invalidates only iterators to the removed element
+    //     (i.e. end() moves back one; everything before it stays valid).
+    T* begin() { return data_; }
+    T* end()   { return data_ + size_; }
+    const T* begin() const { return data_; }
+    const T* end()   const { return data_ + size_; }
+
+    // ── push_back ──────────────────────────────────────────
+    void push_back(const T&amp; v) { emplace_back(v); }
+    void push_back(T&amp;&amp; v)      { emplace_back(std::move(v)); }
+
+    // emplace_back: construct in-place, avoiding an extra copy/move
+    template &lt;typename... Args&gt;
+    T&amp; emplace_back(Args&amp;&amp;... args) {
+        if (size_ == cap_) grow();
+        AllocTraits::construct(alloc_, data_ + size_, std::forward&lt;Args&gt;(args)...);
+        return data_[size_++];
+    }
+
+    // ── pop_back ───────────────────────────────────────────
+    void pop_back() {
+        AllocTraits::destroy(alloc_, data_ + --size_);
+        // capacity unchanged — no reallocation, no iterator invalidation
+        // except for the now-invalid end() / pointer to the removed element
+    }
+
+    // ── clear ──────────────────────────────────────────────
+    void clear() noexcept {
+        for (size_t i = size_; i &gt; 0; )
+            AllocTraits::destroy(alloc_, data_ + --i);
+        size_ = 0;
+    }
+
+    // ── reserve ────────────────────────────────────────────
+    void reserve(size_t newcap) {
+        if (newcap &lt;= cap_) return;
+        reallocate(newcap);
+    }
+
+private:
+    void grow() {
+        reallocate(cap_ == 0 ? 1 : cap_ * 2);   // 2× growth policy
+    }
+
+    // Allocate new storage, move existing elements using move_if_noexcept
+    // so that if T's move constructor is not noexcept, we copy instead —
+    // preserving the strong exception guarantee.
+    void reallocate(size_t newcap) {
+        T* newdata = AllocTraits::allocate(alloc_, newcap);
+        size_t i = 0;
+        try {
+            for (; i &lt; size_; ++i)
+                AllocTraits::construct(alloc_, newdata + i,
+                    std::move_if_noexcept(data_[i]));  // copy if move can throw
+        } catch (...) {
+            // Destroy what we managed to construct, then release new buffer
+            for (size_t j = 0; j &lt; i; ++j)
+                AllocTraits::destroy(alloc_, newdata + j);
+            AllocTraits::deallocate(alloc_, newdata, newcap);
+            throw;
+        }
+        // Destroy old elements and release old storage
+        clear();
+        if (data_) AllocTraits::deallocate(alloc_, data_, cap_);
+        data_ = newdata;
+        cap_  = newcap;
+    }
+};</code></pre>
+
+  <h4>Key talking points summary</h4>
+  <table>
+    <tr><th>Topic</th><th>What to say</th></tr>
+    <tr><td>Data layout</td><td>Three members: raw pointer, size (constructed elements), capacity (allocated slots). Could also store as three pointers — equivalent, just a style choice.</td></tr>
+    <tr><td>Growth policy</td><td>2× for simplicity / guaranteed amortised O(1); 1.5× for better memory reuse. Name the trade-off explicitly.</td></tr>
+    <tr><td>Move constructor <code>noexcept</code></td><td><code>std::vector</code> uses <code>std::move_if_noexcept</code> on reallocation. If your element type's move ctor is not <code>noexcept</code>, the vector <em>copies</em> during growth — silently destroying O(1) amortised push_back. Always mark move ctors <code>noexcept</code> when you can.</td></tr>
+    <tr><td>Allocator awareness</td><td>Use <code>std::allocator_traits</code> instead of calling <code>::new</code>/<code>::delete</code> directly — it adapts to custom allocators and handles <code>construct</code>/<code>destroy</code> correctly for fancy pointers.</td></tr>
+    <tr><td>RAII destructor</td><td>Two jobs: (1) destroy each live element (call destructor), then (2) release the raw storage. Destroying without releasing leaks memory; releasing without destroying leaks resources.</td></tr>
+    <tr><td>Iterator invalidation</td><td>Reallocation invalidates everything. <code>pop_back</code> only invalidates <code>end()</code> and the pointer/reference to the removed element — everything before remains valid.</td></tr>
+    <tr><td>Exception safety</td><td><code>reallocate</code> catches exceptions mid-move, destroys partial work, releases the new buffer, and rethrows — leaving the original vector unchanged (strong guarantee).</td></tr>
+  </table>
 
   <!-- ================================================================== -->
   <h2 class="section" id="interview">Interview Q&amp;A flash cards</h2>
